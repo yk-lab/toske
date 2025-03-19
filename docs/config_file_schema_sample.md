@@ -32,7 +32,7 @@ projects:
       "description": "バックアップ対象プロジェクト一覧",
       "items": {
         "type": "object",
-        "required": ["name", "repo", "branch", "backup_files"],
+        "required": ["name", "repo", "branch", "backup_paths"],
         "properties": {
           "name": {
             "type": "string",
