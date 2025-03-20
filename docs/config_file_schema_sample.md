@@ -1,6 +1,7 @@
 # 設定ファイルのスキーマサンプル
 
 ```yaml
+version: 1.0.0
 projects:
   - name: project-a
     repo: git@github.com:user/project-a.git
@@ -25,8 +26,14 @@ projects:
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.com/archive-tool/config.schema.json",
   "type": "object",
-  "required": ["projects"],
+  "additionalProperties": false,
+  "required": ["version", "projects"],
   "properties": {
+    "version": {
+      "type": "string",
+      "description": "設定ファイルのバージョン",
+      "default": "1.0.0"
+    },
     "projects": {
       "type": "array",
       "description": "バックアップ対象プロジェクト一覧",
@@ -62,10 +69,9 @@ projects:
             "description": "バックアップを保持する件数（デフォルトは3）"
           }
         },
-        "additionalItems": false
+        "additionalProperties": false
       }
     }
   },
-  "additionalProperties": false
 }
 ```

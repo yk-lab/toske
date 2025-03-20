@@ -6,7 +6,7 @@ Toske は、使用頻度の低い Git リポジトリを安全にアーカイブ
 
 ---
 
-# 🚀 **Toske - A Simple and Efficient Git Repository Archiver** 🦔
+## 🚀 **Toske - A Simple and Efficient Git Repository Archiver** 🦔
 
 Toske is a Go-based CLI tool for safely archiving low-frequency Git repositories  
 and easily restoring them when needed.  
