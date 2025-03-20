@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "*.md": "markdown",
+    },
+    "[markdown]": {
+        "editor.codeActionsOnSave": {
+            "source.fixAll.markdownlint": "explicit"
+        }
+    },
+    "[json]": {
+        "editor.quickSuggestions": {
+            "strings": true
+        }
+    }
+}
