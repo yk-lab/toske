@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -9,16 +10,24 @@ import (
 	"github.com/yk-lab/toske/utils"
 )
 
-
+var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "toske",
 	Short: "A brief description of your application",
-	Long: utils.AAFromText("hero.txt"),
+	Long:  hero(),
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
+}
+
+func hero() string {
+	txt, err := utils.AAFromText("hero.txt")
+	if err != nil {
+		return "TOSKE"
+	}
+	return txt
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -43,7 +52,6 @@ func init() {
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
-
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {

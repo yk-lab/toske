@@ -8,25 +8,31 @@ import (
 	"github.com/yk-lab/toske/static"
 )
 
-func PrintAAFromTxt(fp string) {
-	text := readFile(filepath.Join("aa", fp))
-	fmt.Print(text)
-}
-
-func AAFromText(fp string) string {
-	text := readFile(filepath.Join("aa", fp))
-	return text
-}
-
-func readFile(fp string) string {
-	file, err := static.Aa.Open(fp)
+func PrintAAFromTxt(fp string) error {
+	text, err := readFile(filepath.Join("aa", fp))
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
-	defer file.Close()
+	fmt.Print(text)
+	return nil
+}
 
-	// ファイルを読み込んで出力
+func AAFromText(fp string) (string, error) {
+	return readFile(filepath.Join("aa", fp))
+}
+
+func readFile(fp string) (string, error) {
+	file, err := static.Aa.Open(fp)
+	if file != nil {
+		defer file.Close()
+	}
+	if err != nil {
+		return "", err
+	}
+
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(file)
-	return buf.String()
+	if _, err := buf.ReadFrom(file); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
