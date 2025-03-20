@@ -23,12 +23,10 @@ func AAFromText(fp string) (string, error) {
 
 func readFile(fp string) (string, error) {
 	file, err := static.Aa.Open(fp)
-	if file != nil {
-		defer file.Close()
-	}
 	if err != nil {
 		return "", err
 	}
+	defer file.Close()
 
 	buf := new(bytes.Buffer)
 	if _, err := buf.ReadFrom(file); err != nil {

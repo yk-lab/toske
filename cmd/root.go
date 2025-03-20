@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -16,15 +17,16 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "toske",
 	Short: "A brief description of your application",
-	Long:  hero(),
+	Long:  getHeroMessage(),
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
-func hero() string {
+func getHeroMessage() string {
 	txt, err := utils.AAFromText("hero.txt")
 	if err != nil {
+		log.Printf("Error reading hero message file: %v", err)
 		return "TOSKE"
 	}
 	return txt
