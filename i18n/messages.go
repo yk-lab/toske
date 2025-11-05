@@ -28,6 +28,10 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"init.nextSteps.backup":    "  3. Backup your project files",
 		"init.nextSteps.backupCmd": "     toske backup --project <project-name>",
 
+		// Config
+		"config.legacyWarning":       "⚠️  WARNING: You are using a legacy configuration file location.",
+		"config.legacyWarningDetail": "   Please migrate to ~/.config/toske/config.yml by running: mv ~/.toske.yaml ~/.config/toske/config.yml",
+
 		// Common
 		"common.error": "Error: %v",
 	},
@@ -55,6 +59,10 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"init.nextSteps.validateCmd": "     toske validate",
 		"init.nextSteps.backup":    "  3. プロジェクトファイルをバックアップ",
 		"init.nextSteps.backupCmd": "     toske backup --project <プロジェクト名>",
+
+		// Config
+		"config.legacyWarning":       "⚠️  警告: レガシーの設定ファイル位置を使用しています。",
+		"config.legacyWarningDetail": "   次のコマンドで ~/.config/toske/config.yml に移行してください: mv ~/.toske.yaml ~/.config/toske/config.yml",
 
 		// Common
 		"common.error": "エラー: %v",

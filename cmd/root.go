@@ -83,6 +83,16 @@ func initConfig() {
 	// ja: 設定ファイルが見つかった場合は読み込む
 	// en: If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		configFile := viper.ConfigFileUsed()
+		fmt.Fprintln(os.Stderr, "Using config file:", configFile)
+
+		// ja: レガシーパスを使用している場合は移行を促す警告を表示
+		// en: Show migration warning if using legacy path
+		if isLegacyConfigPath(configFile) {
+			fmt.Fprintln(os.Stderr, "")
+			fmt.Fprintln(os.Stderr, i18n.T("config.legacyWarning"))
+			fmt.Fprintln(os.Stderr, i18n.T("config.legacyWarningDetail"))
+			fmt.Fprintln(os.Stderr, "")
+		}
 	}
 }
