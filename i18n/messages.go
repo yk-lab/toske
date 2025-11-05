@@ -13,6 +13,10 @@ var messages = map[string]map[string]string{
 The default path is ~/.config/toske/config.yml
 
 You can override the default path by setting the TOSKE_CONFIG environment variable.`,
+
+		// Version command
+		"version.short": "Print the version number of toske",
+		"version.long":  "Print the version number of toske",
 		"init.fileExists":          "Configuration file already exists at: %s",
 		"init.overwritePrompt":     "Do you want to overwrite it? [y/N]: ",
 		"init.cancelled":           "Initialization cancelled.",
@@ -45,6 +49,10 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 デフォルトパス: ~/.config/toske/config.yml
 
 TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上書きできます。`,
+
+		// Version command
+		"version.short": "toske のバージョン番号を表示",
+		"version.long":  "toske のバージョン番号を表示します",
 		"init.fileExists":          "設定ファイルは既に存在します: %s",
 		"init.overwritePrompt":     "上書きしますか？ [y/N]: ",
 		"init.cancelled":           "初期化をキャンセルしました。",
