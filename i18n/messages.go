@@ -1,0 +1,62 @@
+package i18n
+
+// messages contains all translated messages
+// Structure: messages[language][key] = translated text
+var messages = map[string]map[string]string{
+	"en": {
+		// Root command
+		"root.short": "A brief description of your application",
+
+		// Init command
+		"init.short": "Initialize configuration file",
+		"init.long": `Initialize creates a new configuration file at the default location.
+The default path is ~/.config/toske/config.yml
+
+You can override the default path by setting the TOSKE_CONFIG environment variable.`,
+		"init.fileExists":          "Configuration file already exists at: %s",
+		"init.overwritePrompt":     "Do you want to overwrite it? [y/N]: ",
+		"init.cancelled":           "Initialization cancelled.",
+		"init.createDirError":      "failed to create config directory: %w",
+		"init.writeFileError":      "failed to write config file: %w",
+		"init.readInputError":      "failed to read input: %w",
+		"init.success":             "✓ Configuration file created successfully at: %s",
+		"init.nextSteps":           "\nNext steps:",
+		"init.nextSteps.edit":      "  1. Edit the configuration file to add your projects",
+		"init.nextSteps.editCmd":   "     toske edit",
+		"init.nextSteps.validate":  "  2. Validate your configuration",
+		"init.nextSteps.validateCmd": "     toske validate",
+		"init.nextSteps.backup":    "  3. Backup your project files",
+		"init.nextSteps.backupCmd": "     toske backup --project <project-name>",
+
+		// Common
+		"common.error": "Error: %v",
+	},
+	"ja": {
+		// Root command
+		"root.short": "アプリケーションの簡単な説明",
+
+		// Init command
+		"init.short": "設定ファイルを初期化",
+		"init.long": `デフォルトの場所に新しい設定ファイルを作成します。
+デフォルトパス: ~/.config/toske/config.yml
+
+TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上書きできます。`,
+		"init.fileExists":          "設定ファイルは既に存在します: %s",
+		"init.overwritePrompt":     "上書きしますか？ [y/N]: ",
+		"init.cancelled":           "初期化をキャンセルしました。",
+		"init.createDirError":      "設定ディレクトリの作成に失敗しました: %w",
+		"init.writeFileError":      "設定ファイルの書き込みに失敗しました: %w",
+		"init.readInputError":      "入力の読み取りに失敗しました: %w",
+		"init.success":             "✓ 設定ファイルを正常に作成しました: %s",
+		"init.nextSteps":           "\n次のステップ:",
+		"init.nextSteps.edit":      "  1. 設定ファイルを編集してプロジェクトを追加",
+		"init.nextSteps.editCmd":   "     toske edit",
+		"init.nextSteps.validate":  "  2. 設定ファイルを検証",
+		"init.nextSteps.validateCmd": "     toske validate",
+		"init.nextSteps.backup":    "  3. プロジェクトファイルをバックアップ",
+		"init.nextSteps.backupCmd": "     toske backup --project <プロジェクト名>",
+
+		// Common
+		"common.error": "エラー: %v",
+	},
+}

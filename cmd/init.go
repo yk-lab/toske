@@ -8,19 +8,17 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/yk-lab/toske/i18n"
 )
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize configuration file",
-	Long: `Initialize creates a new configuration file at the default location.
-The default path is ~/.config/toske/config.yml
-
-You can override the default path by setting the TOSKE_CONFIG environment variable.`,
+	Short: i18n.T("init.short"),
+	Long:  i18n.T("init.long"),
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := runInit(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			fmt.Fprintf(os.Stderr, i18n.T("common.error")+"\n", err)
 			os.Exit(1)
 		}
 	},
@@ -36,18 +34,18 @@ func runInit() error {
 	// Check if config file already exists
 	if _, err := os.Stat(configPath); err == nil {
 		// File exists, ask for confirmation
-		fmt.Printf("Configuration file already exists at: %s\n", configPath)
-		fmt.Print("Do you want to overwrite it? [y/N]: ")
+		fmt.Printf(i18n.T("init.fileExists")+"\n", configPath)
+		fmt.Print(i18n.T("init.overwritePrompt"))
 
 		reader := bufio.NewReader(os.Stdin)
 		response, err := reader.ReadString('\n')
 		if err != nil {
-			return fmt.Errorf("failed to read input: %w", err)
+			return fmt.Errorf(i18n.T("init.readInputError"), err)
 		}
 
 		response = strings.TrimSpace(strings.ToLower(response))
 		if response != "y" && response != "yes" {
-			fmt.Println("Initialization cancelled.")
+			fmt.Println(i18n.T("init.cancelled"))
 			return nil
 		}
 	}
@@ -55,23 +53,23 @@ func runInit() error {
 	// Create directory if it doesn't exist
 	configDir := filepath.Dir(configPath)
 	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return fmt.Errorf("failed to create config directory: %w", err)
+		return fmt.Errorf(i18n.T("init.createDirError"), err)
 	}
 
 	// Create config file with template
 	content := getConfigTemplate()
 	if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("failed to write config file: %w", err)
+		return fmt.Errorf(i18n.T("init.writeFileError"), err)
 	}
 
-	fmt.Printf("✓ Configuration file created successfully at: %s\n", configPath)
-	fmt.Println("\nNext steps:")
-	fmt.Println("  1. Edit the configuration file to add your projects")
-	fmt.Printf("     toske edit\n")
-	fmt.Println("  2. Validate your configuration")
-	fmt.Printf("     toske validate\n")
-	fmt.Println("  3. Backup your project files")
-	fmt.Printf("     toske backup --project <project-name>\n")
+	fmt.Printf(i18n.T("init.success")+"\n", configPath)
+	fmt.Println(i18n.T("init.nextSteps"))
+	fmt.Println(i18n.T("init.nextSteps.edit"))
+	fmt.Println(i18n.T("init.nextSteps.editCmd"))
+	fmt.Println(i18n.T("init.nextSteps.validate"))
+	fmt.Println(i18n.T("init.nextSteps.validateCmd"))
+	fmt.Println(i18n.T("init.nextSteps.backup"))
+	fmt.Println(i18n.T("init.nextSteps.backupCmd"))
 
 	return nil
 }

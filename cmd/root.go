@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/yk-lab/toske/i18n"
 	"github.com/yk-lab/toske/utils"
 )
 
@@ -16,7 +17,7 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "toske",
-	Short: "A brief description of your application",
+	Short: i18n.T("root.short"),
 	Long:  getHeroMessage(),
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
