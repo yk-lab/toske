@@ -30,7 +30,12 @@ func init() {
 }
 
 func runInit() error {
-	configPath := getDefaultConfigPath()
+	// ja: 設定ファイルパスを決定（優先順位: --config フラグ > TOSKE_CONFIG 環境変数 > デフォルトパス）
+	// en: Determine config file path (priority: --config flag > TOSKE_CONFIG env var > default path)
+	configPath := cfgFile
+	if configPath == "" {
+		configPath = getDefaultConfigPath()
+	}
 
 	// ja: 設定ファイルが既に存在するかチェック
 	// en: Check if config file already exists
