@@ -17,6 +17,8 @@ Use 'toske help [command]' to get detailed information about a specific command.
 		"help.usage":             "Usage:",
 		"help.examples":          "Examples:",
 		"help.additionalHelp":    "\nUse \"toske [command] --help\" for more information about a command.",
+		"help.unknownCommand":    "Unknown command '%s'",
+		"help.displayError":      "Error displaying help: %v",
 
 		// Init command
 		"init.short": "Initialize configuration file",
@@ -60,6 +62,8 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"help.usage":             "使用法:",
 		"help.examples":          "例:",
 		"help.additionalHelp":    "\nコマンドの詳細情報は \"toske [コマンド] --help\" を使用してください。",
+		"help.unknownCommand":    "不明なコマンド '%s'",
+		"help.displayError":      "ヘルプの表示エラー: %v",
 
 		// Init command
 		"init.short": "設定ファイルを初期化",

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -101,14 +102,17 @@ func showCommandHelp(cmd *cobra.Command, commandName string) {
 	}
 
 	if targetCmd == nil {
-		fmt.Printf("Unknown command '%s'\n", commandName)
+		fmt.Printf(i18n.T("help.unknownCommand")+"\n", commandName)
 		fmt.Printf("%s\n", i18n.T("help.additionalHelp"))
 		return
 	}
 
 	// ja: コマンドのヘルプを表示
 	// en: Display command help
-	targetCmd.Help()
+	if err := targetCmd.Help(); err != nil {
+		fmt.Fprintf(os.Stderr, i18n.T("help.displayError")+"\n", err)
+		os.Exit(1)
+	}
 }
 
 // ja: contains は文字列のスライスに指定された文字列が含まれているかチェックします
