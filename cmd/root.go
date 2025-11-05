@@ -49,6 +49,13 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	// ja: デフォルトの help コマンドを無効にして、カスタム help コマンドを使用
+	// en: Disable the default help command and use our custom help command
+	rootCmd.SetHelpCommand(&cobra.Command{
+		Use:    "no-help",
+		Hidden: true,
+	})
+
 	// ja: ここでフラグと設定を定義します。
 	// Cobra は永続フラグをサポートしており、ここで定義された場合、アプリケーション全体でグローバルになります。
 	// en: Here you will define your flags and configuration settings.
