@@ -3,13 +3,18 @@ package i18n
 import (
 	"os"
 	"strings"
+	"sync"
 )
 
 // SupportedLanguages is the list of supported language codes
 var SupportedLanguages = []string{"en", "ja"}
 
-// currentLanguage holds the detected language
-var currentLanguage string
+var (
+	// currentLanguage holds the detected language
+	currentLanguage string
+	// languageMu protects currentLanguage from concurrent access
+	languageMu sync.RWMutex
+)
 
 func init() {
 	currentLanguage = detectLanguage()
@@ -65,8 +70,12 @@ func normalizeLanguage(locale string) string {
 // T returns the translated message for the given key
 // If the key is not found in the current language, it falls back to English
 func T(key string) string {
+	languageMu.RLock()
+	lang := currentLanguage
+	languageMu.RUnlock()
+
 	// Try to get message in current language
-	if msg, ok := messages[currentLanguage][key]; ok {
+	if msg, ok := messages[lang][key]; ok {
 		return msg
 	}
 
@@ -81,10 +90,14 @@ func T(key string) string {
 
 // GetLanguage returns the current language code
 func GetLanguage() string {
+	languageMu.RLock()
+	defer languageMu.RUnlock()
 	return currentLanguage
 }
 
 // SetLanguage sets the current language (useful for testing)
 func SetLanguage(lang string) {
+	languageMu.Lock()
+	defer languageMu.Unlock()
 	currentLanguage = normalizeLanguage(lang)
 }

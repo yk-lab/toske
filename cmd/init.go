@@ -11,7 +11,8 @@ import (
 	"github.com/yk-lab/toske/i18n"
 )
 
-// initCmd represents the init command
+// ja: initCmd は init コマンドを表します
+// en: initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: i18n.T("init.short"),
@@ -29,11 +30,13 @@ func init() {
 }
 
 func runInit() error {
-	configPath := getConfigPath()
+	configPath := getDefaultConfigPath()
 
-	// Check if config file already exists
+	// ja: 設定ファイルが既に存在するかチェック
+	// en: Check if config file already exists
 	if _, err := os.Stat(configPath); err == nil {
-		// File exists, ask for confirmation
+		// ja: ファイルが存在する場合、確認を求める
+		// en: File exists, ask for confirmation
 		fmt.Printf(i18n.T("init.fileExists")+"\n", configPath)
 		fmt.Print(i18n.T("init.overwritePrompt"))
 
@@ -50,13 +53,15 @@ func runInit() error {
 		}
 	}
 
-	// Create directory if it doesn't exist
+	// ja: ディレクトリが存在しない場合は作成
+	// en: Create directory if it doesn't exist
 	configDir := filepath.Dir(configPath)
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		return fmt.Errorf(i18n.T("init.createDirError"), err)
 	}
 
-	// Create config file with template
+	// ja: テンプレートを使用して設定ファイルを作成
+	// en: Create config file with template
 	content := getConfigTemplate()
 	if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf(i18n.T("init.writeFileError"), err)
@@ -74,23 +79,8 @@ func runInit() error {
 	return nil
 }
 
-// getConfigPath returns the configuration file path
-// Priority: TOSKE_CONFIG env var > default path
-func getConfigPath() string {
-	if configPath := os.Getenv("TOSKE_CONFIG"); configPath != "" {
-		return configPath
-	}
-
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		// Fallback to current directory if home dir cannot be determined
-		return "./toske-config.yml"
-	}
-
-	return filepath.Join(homeDir, ".config", "toske", "config.yml")
-}
-
-// getConfigTemplate returns the default configuration template
+// ja: getConfigTemplate はデフォルトの設定テンプレートを返します
+// en: getConfigTemplate returns the default configuration template
 func getConfigTemplate() string {
 	return `version: 1.0.0
 projects:
@@ -103,7 +93,8 @@ projects:
       - config/
     backup_retention: 3
 
-# Add more projects as needed:
+# ja: 必要に応じてプロジェクトを追加してください:
+# en: Add more projects as needed:
 #  - name: another-project
 #    repo: https://github.com/user/another-project.git
 #    branch: develop
