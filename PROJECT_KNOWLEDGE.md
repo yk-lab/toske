@@ -8,3 +8,7 @@
 
 * 初期バージョン: <docs/commands_v1.md>
 * v2以降案: <docs/commands_v2.md>
+
+## ビルドと動作確認
+
+<docs/BUILD_AND_VERIFICATION.md>
