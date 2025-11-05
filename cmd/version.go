@@ -8,7 +8,9 @@ import (
 )
 
 // Version is the current version of toske
-const Version = "0.1.0"
+// This can be overridden at build time using ldflags:
+// go build -ldflags "-X github.com/yk-lab/toske/cmd.Version=0.1.0"
+var Version = "dev"
 
 // ja: versionCmd は version コマンドを表します
 // en: versionCmd represents the version command
