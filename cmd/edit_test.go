@@ -112,3 +112,61 @@ func TestGetEditorPriority(t *testing.T) {
 		t.Errorf("Expected EDITOR to take priority, got %s instead of emacs", editor)
 	}
 }
+
+func TestGetEditorWithFlags(t *testing.T) {
+	// ja: 元の環境変数を保存
+	// en: Save original environment variables
+	originalEditor := os.Getenv("EDITOR")
+	originalVisual := os.Getenv("VISUAL")
+	defer func() {
+		// ja: テスト後に環境変数を復元
+		// en: Restore environment variables after test
+		os.Setenv("EDITOR", originalEditor)
+		os.Setenv("VISUAL", originalVisual)
+	}()
+
+	tests := []struct {
+		name         string
+		editorEnv    string
+		visualEnv    string
+		expectedFull string
+	}{
+		{
+			name:         "EDITOR with flags",
+			editorEnv:    "code --wait",
+			visualEnv:    "",
+			expectedFull: "code --wait",
+		},
+		{
+			name:         "VISUAL with flags",
+			editorEnv:    "",
+			visualEnv:    "subl -w",
+			expectedFull: "subl -w",
+		},
+		{
+			name:         "EDITOR with multiple flags",
+			editorEnv:    "emacs -nw --no-splash",
+			visualEnv:    "",
+			expectedFull: "emacs -nw --no-splash",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// ja: 環境変数を設定
+			// en: Set environment variables
+			os.Setenv("EDITOR", tt.editorEnv)
+			os.Setenv("VISUAL", tt.visualEnv)
+
+			// ja: エディタを取得
+			// en: Get editor
+			editor := getEditor()
+
+			// ja: フラグ付きのエディタコマンドが正しく返されることを確認
+			// en: Verify that editor command with flags is returned correctly
+			if editor != tt.expectedFull {
+				t.Errorf("Expected editor %q, got %q", tt.expectedFull, editor)
+			}
+		})
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/yk-lab/toske/i18n"
@@ -53,7 +54,10 @@ func runEdit() error {
 	// en: Open config file in editor
 	fmt.Printf(i18n.T("edit.openingEditor")+"\n", editor)
 
-	editorCmd := exec.Command(editor, configPath)
+	// ja: エディタコマンドをパースして引数を分離
+	// en: Parse editor command to separate arguments
+	editorParts := strings.Fields(editor)
+	editorCmd := exec.Command(editorParts[0], append(editorParts[1:], configPath)...)
 	editorCmd.Stdin = os.Stdin
 	editorCmd.Stdout = os.Stdout
 	editorCmd.Stderr = os.Stderr
