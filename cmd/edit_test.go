@@ -2,8 +2,21 @@ package cmd
 
 import (
 	"os"
+	"os/exec"
 	"testing"
 )
+
+// ja: hasDefaultEditor はデフォルトエディタが利用可能かチェックします
+// en: hasDefaultEditor checks if any default editor is available
+func hasDefaultEditor() bool {
+	editors := []string{"vim", "vi", "nano"}
+	for _, editor := range editors {
+		if _, err := exec.LookPath(editor); err == nil {
+			return true
+		}
+	}
+	return false
+}
 
 func TestGetEditor(t *testing.T) {
 	// ja: 元の環境変数を保存
@@ -45,6 +58,12 @@ func TestGetEditor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// ja: 両方の環境変数が空の場合、デフォルトエディタの存在をチェック
+			// en: If both environment variables are empty, check for default editor
+			if tt.editorEnv == "" && tt.visualEnv == "" && !hasDefaultEditor() {
+				t.Skip("Skipping test: no default editor (vim/vi/nano) found on system")
+			}
+
 			// ja: 環境変数を設定
 			// en: Set environment variables
 			os.Setenv("EDITOR", tt.editorEnv)
