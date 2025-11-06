@@ -7,6 +7,19 @@ var messages = map[string]map[string]string{
 		// Root command
 		"root.short": "A brief description of your application",
 
+		// Help command
+		"help.short": "Display help information about commands",
+		"help.long": `Display detailed help information about available commands and their usage.
+
+Use 'toske help [command]' to get detailed information about a specific command.`,
+		"help.availableCommands": "Available Commands:",
+		"help.flags":             "Flags:",
+		"help.usage":             "Usage:",
+		"help.examples":          "Examples:",
+		"help.additionalHelp":    "\nUse \"toske [command] --help\" for more information about a command.",
+		"help.unknownCommand":    "Unknown command '%s'",
+		"help.displayError":      "Error displaying help: %v",
+
 		// Init command
 		"init.short": "Initialize configuration file",
 		"init.long": `Initialize creates a new configuration file at the default location.
@@ -38,6 +51,19 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 	"ja": {
 		// Root command
 		"root.short": "アプリケーションの簡単な説明",
+
+		// Help command
+		"help.short": "コマンドのヘルプ情報を表示",
+		"help.long": `利用可能なコマンドとその使用方法の詳細なヘルプ情報を表示します。
+
+特定のコマンドの詳細情報を取得するには 'toske help [コマンド]' を使用してください。`,
+		"help.availableCommands": "利用可能なコマンド:",
+		"help.flags":             "フラグ:",
+		"help.usage":             "使用法:",
+		"help.examples":          "例:",
+		"help.additionalHelp":    "\nコマンドの詳細情報は \"toske [コマンド] --help\" を使用してください。",
+		"help.unknownCommand":    "不明なコマンド '%s'",
+		"help.displayError":      "ヘルプの表示エラー: %v",
 
 		// Init command
 		"init.short": "設定ファイルを初期化",
