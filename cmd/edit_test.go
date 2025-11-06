@@ -21,13 +21,21 @@ func hasDefaultEditor() bool {
 func TestGetEditor(t *testing.T) {
 	// ja: 元の環境変数を保存
 	// en: Save original environment variables
-	originalEditor := os.Getenv("EDITOR")
-	originalVisual := os.Getenv("VISUAL")
+	originalEditor, editorWasSet := os.LookupEnv("EDITOR")
+	originalVisual, visualWasSet := os.LookupEnv("VISUAL")
 	defer func() {
 		// ja: テスト後に環境変数を復元
 		// en: Restore environment variables after test
-		os.Setenv("EDITOR", originalEditor)
-		os.Setenv("VISUAL", originalVisual)
+		if editorWasSet {
+			os.Setenv("EDITOR", originalEditor)
+		} else {
+			os.Unsetenv("EDITOR")
+		}
+		if visualWasSet {
+			os.Setenv("VISUAL", originalVisual)
+		} else {
+			os.Unsetenv("VISUAL")
+		}
 	}()
 
 	tests := []struct {
@@ -95,11 +103,21 @@ func TestGetEditor(t *testing.T) {
 func TestGetEditorPriority(t *testing.T) {
 	// ja: 元の環境変数を保存
 	// en: Save original environment variables
-	originalEditor := os.Getenv("EDITOR")
-	originalVisual := os.Getenv("VISUAL")
+	originalEditor, editorWasSet := os.LookupEnv("EDITOR")
+	originalVisual, visualWasSet := os.LookupEnv("VISUAL")
 	defer func() {
-		os.Setenv("EDITOR", originalEditor)
-		os.Setenv("VISUAL", originalVisual)
+		// ja: テスト後に環境変数を復元
+		// en: Restore environment variables after test
+		if editorWasSet {
+			os.Setenv("EDITOR", originalEditor)
+		} else {
+			os.Unsetenv("EDITOR")
+		}
+		if visualWasSet {
+			os.Setenv("VISUAL", originalVisual)
+		} else {
+			os.Unsetenv("VISUAL")
+		}
 	}()
 
 	// ja: EDITOR と VISUAL の両方が設定されている場合、EDITOR が優先される
@@ -116,13 +134,21 @@ func TestGetEditorPriority(t *testing.T) {
 func TestGetEditorWithFlags(t *testing.T) {
 	// ja: 元の環境変数を保存
 	// en: Save original environment variables
-	originalEditor := os.Getenv("EDITOR")
-	originalVisual := os.Getenv("VISUAL")
+	originalEditor, editorWasSet := os.LookupEnv("EDITOR")
+	originalVisual, visualWasSet := os.LookupEnv("VISUAL")
 	defer func() {
 		// ja: テスト後に環境変数を復元
 		// en: Restore environment variables after test
-		os.Setenv("EDITOR", originalEditor)
-		os.Setenv("VISUAL", originalVisual)
+		if editorWasSet {
+			os.Setenv("EDITOR", originalEditor)
+		} else {
+			os.Unsetenv("EDITOR")
+		}
+		if visualWasSet {
+			os.Setenv("VISUAL", originalVisual)
+		} else {
+			os.Unsetenv("VISUAL")
+		}
 	}()
 
 	tests := []struct {
