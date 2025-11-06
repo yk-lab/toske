@@ -15,8 +15,9 @@ The default path is ~/.config/toske/config.yml
 You can override the default path by setting the TOSKE_CONFIG environment variable.`,
 
 		// Version command
-		"version.short": "Print the version number of toske",
-		"version.long":  "Print the version number of toske",
+		"version.short":      "Print the version number of toske",
+		"version.long":       "Print the version number of toske along with build information",
+		"version.flag.short": "Print only the version number",
 		"init.fileExists":          "Configuration file already exists at: %s",
 		"init.overwritePrompt":     "Do you want to overwrite it? [y/N]: ",
 		"init.cancelled":           "Initialization cancelled.",
@@ -51,8 +52,9 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上書きできます。`,
 
 		// Version command
-		"version.short": "toske のバージョン番号を表示",
-		"version.long":  "toske のバージョン番号を表示します",
+		"version.short":      "toske のバージョン番号を表示",
+		"version.long":       "toske のバージョン番号とビルド情報を表示します",
+		"version.flag.short": "バージョン番号のみを表示",
 		"init.fileExists":          "設定ファイルは既に存在します: %s",
 		"init.overwritePrompt":     "上書きしますか？ [y/N]: ",
 		"init.cancelled":           "初期化をキャンセルしました。",
