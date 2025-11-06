@@ -44,10 +44,6 @@ func TestGetDefaultConfigPath(t *testing.T) {
 			return
 		}
 
-		if !filepath.IsAbs(result) {
-			t.Errorf("Expected absolute path, got %s", result)
-		}
-
 		expectedSuffix := filepath.Join(".config", "toske", "config.yml")
 		if !filepath.IsAbs(result) || !endsWithPath(result, expectedSuffix) {
 			t.Errorf("Expected path to end with %s, got %s", expectedSuffix, result)
