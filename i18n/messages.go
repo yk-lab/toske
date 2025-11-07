@@ -31,6 +31,14 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"version.short":      "Print the version number of toske",
 		"version.long":       "Print the version number of toske along with build information",
 		"version.flag.short": "Print only the version number",
+
+		// Edit command
+		"edit.short":         "Edit the configuration file",
+		"edit.long":          "Open the configuration file in your default editor.\nThe editor is determined by the EDITOR environment variable, or falls back to vi/vim/nano.",
+		"edit.noConfig":      "Configuration file does not exist: %s\nRun 'toske init' to create one.",
+		"edit.noEditor":      "No suitable editor found. Please set the EDITOR environment variable.",
+		"edit.editorError":   "Failed to open editor: %v",
+		"edit.openingEditor": "Opening configuration file in %s...",
 		"init.fileExists":          "Configuration file already exists at: %s",
 		"init.overwritePrompt":     "Do you want to overwrite it? [y/N]: ",
 		"init.cancelled":           "Initialization cancelled.",
@@ -81,6 +89,14 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"version.short":      "toske のバージョン番号を表示",
 		"version.long":       "toske のバージョン番号とビルド情報を表示します",
 		"version.flag.short": "バージョン番号のみを表示",
+
+		// Edit command
+		"edit.short":         "設定ファイルを編集",
+		"edit.long":          "設定ファイルをデフォルトエディタで開きます。\nエディタは EDITOR 環境変数で決定されます。設定されていない場合は vi/vim/nano を使用します。",
+		"edit.noConfig":      "設定ファイルが存在しません: %s\n'toske init' を実行して作成してください。",
+		"edit.noEditor":      "適切なエディタが見つかりません。EDITOR 環境変数を設定してください。",
+		"edit.editorError":   "エディタの起動に失敗しました: %v",
+		"edit.openingEditor": "設定ファイルを %s で開いています...",
 		"init.fileExists":          "設定ファイルは既に存在します: %s",
 		"init.overwritePrompt":     "上書きしますか？ [y/N]: ",
 		"init.cancelled":           "初期化をキャンセルしました。",
