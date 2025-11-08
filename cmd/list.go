@@ -73,7 +73,10 @@ func runList() error {
 		fmt.Printf("    %s: %s\n", i18n.T("list.repo"), project.Repo)
 		fmt.Printf("    %s: %s\n", i18n.T("list.branch"), project.Branch)
 		if len(project.BackupPaths) > 0 {
-			fmt.Printf("    %s: %v\n", i18n.T("list.backupPaths"), project.BackupPaths)
+			fmt.Printf("    %s:\n", i18n.T("list.backupPaths"))
+			for _, path := range project.BackupPaths {
+				fmt.Printf("      - %s\n", path)
+			}
 		}
 		if project.BackupRetention > 0 {
 			fmt.Printf("    %s: %d\n", i18n.T("list.retention"), project.BackupRetention)
