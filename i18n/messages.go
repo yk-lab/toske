@@ -71,6 +71,20 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"validate.error.projectNoBranch":    "Configuration error: project '%s' is missing the 'branch' field",
 		"validate.error.invalidRetention":   "Configuration error: project '%s' has invalid backup_retention value: %d (must be >= 0)",
 
+		// List command
+		"list.short":       "List all registered projects",
+		"list.long":        "Display a list of all projects registered in the configuration file.",
+		"list.noConfig":    "Configuration file does not exist: %s\nRun 'toske init' to create one.",
+		"list.readError":   "Failed to read configuration file: %v",
+		"list.parseError":  "Failed to parse configuration file: %v",
+		"list.noProjects":  "No projects are registered yet.\nRun 'toske edit' to add projects to your configuration.",
+		"list.header":      "Registered Projects:",
+		"list.repo":        "Repository",
+		"list.branch":      "Branch",
+		"list.backupPaths": "Backup Paths",
+		"list.retention":   "Retention",
+		"list.total":       "\nTotal: %d project(s)",
+
 		// Config
 		"config.legacyWarning":       "⚠️  WARNING: You are using a legacy configuration file location.",
 		"config.legacyWarningDetail": "   Please migrate to ~/.config/toske/config.yml by running: mv ~/.toske.yaml ~/.config/toske/config.yml",
@@ -145,6 +159,20 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"validate.error.projectNoRepo":      "設定エラー: プロジェクト '%s' に 'repo' フィールドがありません",
 		"validate.error.projectNoBranch":    "設定エラー: プロジェクト '%s' に 'branch' フィールドがありません",
 		"validate.error.invalidRetention":   "設定エラー: プロジェクト '%s' の backup_retention 値が無効です: %d (0以上である必要があります)",
+
+		// List command
+		"list.short":       "登録済みプロジェクトの一覧を表示",
+		"list.long":        "設定ファイルに登録されているすべてのプロジェクトの一覧を表示します。",
+		"list.noConfig":    "設定ファイルが存在しません: %s\n'toske init' を実行して作成してください。",
+		"list.readError":   "設定ファイルの読み込みに失敗しました: %v",
+		"list.parseError":  "設定ファイルのパースに失敗しました: %v",
+		"list.noProjects":  "プロジェクトが登録されていません。\n'toske edit' を実行して設定ファイルにプロジェクトを追加してください。",
+		"list.header":      "登録済みプロジェクト:",
+		"list.repo":        "リポジトリ",
+		"list.branch":      "ブランチ",
+		"list.backupPaths": "バックアップパス",
+		"list.retention":   "保持件数",
+		"list.total":       "\n合計: %d 件",
 
 		// Config
 		"config.legacyWarning":       "⚠️  警告: レガシーの設定ファイル位置を使用しています。",
