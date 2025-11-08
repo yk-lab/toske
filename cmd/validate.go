@@ -55,8 +55,7 @@ func runValidate() error {
 	// ja: 設定ファイルが存在するかチェック
 	// en: Check if config file exists
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		msg := fmt.Sprintf(i18n.T("validate.noConfig"), configPath)
-		return fmt.Errorf("%s", msg)
+		return fmt.Errorf(i18n.T("validate.noConfig"), configPath)
 	}
 
 	fmt.Printf(i18n.T("validate.checking")+"\n", configPath)
@@ -67,16 +66,14 @@ func runValidate() error {
 	v.SetConfigFile(configPath)
 
 	if err := v.ReadInConfig(); err != nil {
-		msg := fmt.Sprintf(i18n.T("validate.readError"), err)
-		return fmt.Errorf("%s", msg)
+		return fmt.Errorf(i18n.T("validate.readError"), err)
 	}
 
 	// ja: 設定を構造体にアンマーシャル
 	// en: Unmarshal config into struct
 	var config Config
 	if err := v.Unmarshal(&config); err != nil {
-		msg := fmt.Sprintf(i18n.T("validate.parseError"), err)
-		return fmt.Errorf("%s", msg)
+		return fmt.Errorf(i18n.T("validate.parseError"), err)
 	}
 
 	// ja: 設定を検証
@@ -127,36 +124,31 @@ func validateProject(project *Project, index int, projectNames map[string]bool) 
 	// ja: プロジェクト名の検証
 	// en: Validate project name
 	if project.Name == "" {
-		msg := fmt.Sprintf(i18n.T("validate.error.projectNoName"), projectNum)
-		return fmt.Errorf("%s", msg)
+		return fmt.Errorf(i18n.T("validate.error.projectNoName"), projectNum)
 	}
 
 	// ja: 重複した名前のチェック
 	// en: Check for duplicate names
 	if projectNames[project.Name] {
-		msg := fmt.Sprintf(i18n.T("validate.error.duplicateName"), project.Name)
-		return fmt.Errorf("%s", msg)
+		return fmt.Errorf(i18n.T("validate.error.duplicateName"), project.Name)
 	}
 
 	// ja: リポジトリURLの検証
 	// en: Validate repository URL
 	if project.Repo == "" {
-		msg := fmt.Sprintf(i18n.T("validate.error.projectNoRepo"), project.Name)
-		return fmt.Errorf("%s", msg)
+		return fmt.Errorf(i18n.T("validate.error.projectNoRepo"), project.Name)
 	}
 
 	// ja: ブランチ名の検証
 	// en: Validate branch name
 	if project.Branch == "" {
-		msg := fmt.Sprintf(i18n.T("validate.error.projectNoBranch"), project.Name)
-		return fmt.Errorf("%s", msg)
+		return fmt.Errorf(i18n.T("validate.error.projectNoBranch"), project.Name)
 	}
 
 	// ja: backup_retention の検証（0以上である必要がある）
 	// en: Validate backup_retention (must be >= 0)
 	if project.BackupRetention < 0 {
-		msg := fmt.Sprintf(i18n.T("validate.error.invalidRetention"), project.Name, project.BackupRetention)
-		return fmt.Errorf("%s", msg)
+		return fmt.Errorf(i18n.T("validate.error.invalidRetention"), project.Name, project.BackupRetention)
 	}
 
 	return nil
