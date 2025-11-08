@@ -127,7 +127,9 @@ func runBackup() error {
 	// ja: バックアップアーカイブを作成
 	// en: Create backup archive
 	timestamp := time.Now()
-	archiveFilename := fmt.Sprintf("backup_%s.tar.gz", timestamp.Format("20060102_150405"))
+	// ja: マイクロ秒を含めることで、同一秒内の複数実行でもファイル名の衝突を防ぐ
+	// en: Include microseconds to prevent filename collisions when multiple runs occur within the same second
+	archiveFilename := fmt.Sprintf("backup_%s.tar.gz", timestamp.Format("20060102_150405.000000"))
 	archivePath := filepath.Join(backupDir, archiveFilename)
 
 	fmt.Printf(i18n.T("backup.creatingArchive")+"\n", archiveFilename)
@@ -239,8 +241,10 @@ func addFileToArchive(tarWriter *tar.Writer, fullPath, archivePath string) error
 		return err
 	}
 
+	// ja: tar アーカイブではパスを POSIX スタイル（スラッシュ）に正規化
+	// en: Normalize path to POSIX style (forward slashes) for tar archive portability
 	header := &tar.Header{
-		Name:    archivePath,
+		Name:    filepath.ToSlash(archivePath),
 		Size:    info.Size(),
 		Mode:    int64(info.Mode()),
 		ModTime: info.ModTime(),

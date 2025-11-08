@@ -111,6 +111,11 @@ projects:
 				t.Fatalf("Failed to create work directory: %v", err)
 			}
 
+			// ja: テスト環境を分離するため、HOMEを一時ディレクトリに設定
+			// en: Isolate test environment by setting HOME to temp directory
+			t.Setenv("HOME", tempDir)
+			t.Setenv("USERPROFILE", tempDir) // Windows support
+
 			// Setup config
 			defer setupTestConfig(t, tt.configData)()
 
@@ -160,6 +165,11 @@ func TestBackupArchiveContents(t *testing.T) {
 		t.Fatalf("Failed to create work directory: %v", err)
 	}
 
+	// ja: テスト環境を分離するため、HOMEを一時ディレクトリに設定
+	// en: Isolate test environment by setting HOME to temp directory
+	t.Setenv("HOME", tempDir)
+	t.Setenv("USERPROFILE", tempDir) // Windows support
+
 	// Create test files
 	testFiles := map[string]string{
 		".env":       "TEST=value",
@@ -206,13 +216,8 @@ projects:
 		t.Fatalf("Backup failed: %v", err)
 	}
 
-	// Verify backup archive exists
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		t.Fatalf("Failed to get home directory: %v", err)
-	}
-
-	backupDir := filepath.Join(homeDir, ".config", "toske", "backups", "archive-test")
+	// Verify backup archive exists in temp home directory
+	backupDir := filepath.Join(tempDir, ".config", "toske", "backups", "archive-test")
 	metadataPath := filepath.Join(backupDir, "backups.yaml")
 
 	// Read metadata
@@ -284,6 +289,11 @@ func TestBackupRetention(t *testing.T) {
 		t.Fatalf("Failed to create work directory: %v", err)
 	}
 
+	// ja: テスト環境を分離するため、HOMEを一時ディレクトリに設定
+	// en: Isolate test environment by setting HOME to temp directory
+	t.Setenv("HOME", tempDir)
+	t.Setenv("USERPROFILE", tempDir) // Windows support
+
 	// Create test file
 	if err := os.WriteFile(filepath.Join(workDir, ".env"), []byte("TEST=value"), 0644); err != nil {
 		t.Fatalf("Failed to create test file: %v", err)
@@ -322,19 +332,15 @@ projects:
 		if err := runBackup(); err != nil {
 			t.Fatalf("Backup %d failed: %v", i+1, err)
 		}
-		// Sleep to ensure different timestamps (format is up to seconds)
+		// ja: マイクロ秒を含む新しいフォーマットでも念のため、異なるタイムスタンプを確実にするためsleep
+		// en: Sleep to ensure different timestamps even with microseconds format
 		if i < 2 {
-			time.Sleep(1 * time.Second)
+			time.Sleep(10 * time.Millisecond)
 		}
 	}
 
-	// Verify only 2 backups are kept
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		t.Fatalf("Failed to get home directory: %v", err)
-	}
-
-	backupDir := filepath.Join(homeDir, ".config", "toske", "backups", "retention-test")
+	// Verify only 2 backups are kept in temp home directory
+	backupDir := filepath.Join(tempDir, ".config", "toske", "backups", "retention-test")
 	metadataPath := filepath.Join(backupDir, "backups.yaml")
 
 	data, err := os.ReadFile(metadataPath)
