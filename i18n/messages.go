@@ -54,6 +54,23 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"init.nextSteps.backup":    "  3. Backup your project files",
 		"init.nextSteps.backupCmd": "     toske backup --project <project-name>",
 
+		// Validate command
+		"validate.short":                    "Validate the configuration file",
+		"validate.long":                     "Validate checks the configuration file for syntax errors and ensures all required fields are present.",
+		"validate.noConfig":                 "Configuration file does not exist: %s\nRun 'toske init' to create one.",
+		"validate.checking":                 "Checking configuration file: %s",
+		"validate.readError":                "Failed to read configuration file: %v",
+		"validate.parseError":               "Failed to parse configuration file: %v",
+		"validate.success":                  "✓ Configuration file is valid!",
+		"validate.projectCount":             "  Found %d project(s) configured",
+		"validate.error.noVersion":          "Configuration error: 'version' field is required",
+		"validate.error.noProjects":         "Configuration error: at least one project must be defined",
+		"validate.error.projectNoName":      "Configuration error: project #%d is missing the 'name' field",
+		"validate.error.duplicateName":      "Configuration error: duplicate project name '%s'",
+		"validate.error.projectNoRepo":      "Configuration error: project '%s' is missing the 'repo' field",
+		"validate.error.projectNoBranch":    "Configuration error: project '%s' is missing the 'branch' field",
+		"validate.error.invalidRetention":   "Configuration error: project '%s' has invalid backup_retention value: %d (must be >= 0)",
+
 		// Config
 		"config.legacyWarning":       "⚠️  WARNING: You are using a legacy configuration file location.",
 		"config.legacyWarningDetail": "   Please migrate to ~/.config/toske/config.yml by running: mv ~/.toske.yaml ~/.config/toske/config.yml",
@@ -111,6 +128,23 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"init.nextSteps.validateCmd": "     toske validate",
 		"init.nextSteps.backup":    "  3. プロジェクトファイルをバックアップ",
 		"init.nextSteps.backupCmd": "     toske backup --project <プロジェクト名>",
+
+		// Validate command
+		"validate.short":                    "設定ファイルを検証",
+		"validate.long":                     "設定ファイルの構文エラーをチェックし、すべての必須フィールドが存在することを確認します。",
+		"validate.noConfig":                 "設定ファイルが存在しません: %s\n'toske init' を実行して作成してください。",
+		"validate.checking":                 "設定ファイルを確認しています: %s",
+		"validate.readError":                "設定ファイルの読み込みに失敗しました: %v",
+		"validate.parseError":               "設定ファイルのパースに失敗しました: %v",
+		"validate.success":                  "✓ 設定ファイルは正常です！",
+		"validate.projectCount":             "  %d 個のプロジェクトが設定されています",
+		"validate.error.noVersion":          "設定エラー: 'version' フィールドは必須です",
+		"validate.error.noProjects":         "設定エラー: 少なくとも1つのプロジェクトを定義する必要があります",
+		"validate.error.projectNoName":      "設定エラー: プロジェクト #%d に 'name' フィールドがありません",
+		"validate.error.duplicateName":      "設定エラー: プロジェクト名 '%s' が重複しています",
+		"validate.error.projectNoRepo":      "設定エラー: プロジェクト '%s' に 'repo' フィールドがありません",
+		"validate.error.projectNoBranch":    "設定エラー: プロジェクト '%s' に 'branch' フィールドがありません",
+		"validate.error.invalidRetention":   "設定エラー: プロジェクト '%s' の backup_retention 値が無効です: %d (0以上である必要があります)",
 
 		// Config
 		"config.legacyWarning":       "⚠️  警告: レガシーの設定ファイル位置を使用しています。",
