@@ -229,11 +229,14 @@ projects: []
 
 			// Capture stdout
 			oldStdout := os.Stdout
-			r, w, _ := os.Pipe()
+			r, w, err := os.Pipe()
+			if err != nil {
+				t.Fatalf("Failed to create pipe: %v", err)
+			}
 			os.Stdout = w
 
 			// Run list
-			err := runList()
+			err = runList()
 
 			// Restore stdout
 			w.Close()
@@ -246,7 +249,9 @@ projects: []
 
 			// Read captured output
 			var buf bytes.Buffer
-			io.Copy(&buf, r)
+			if _, err := io.Copy(&buf, r); err != nil {
+				t.Fatalf("Failed to read output: %v", err)
+			}
 			output := buf.String()
 
 			// Validate output contains expected strings
@@ -289,11 +294,14 @@ projects:
 
 	// Capture stdout
 	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("Failed to create pipe: %v", err)
+	}
 	os.Stdout = w
 
 	// Run list
-	err := runList()
+	err = runList()
 
 	// Restore stdout
 	w.Close()
@@ -305,7 +313,9 @@ projects:
 
 	// Read captured output
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	if _, err := io.Copy(&buf, r); err != nil {
+		t.Fatalf("Failed to read output: %v", err)
+	}
 	output := buf.String()
 
 	// Verify backup paths are shown as bullet list
