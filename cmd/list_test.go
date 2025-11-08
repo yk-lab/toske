@@ -9,6 +9,56 @@ import (
 	"testing"
 )
 
+// setupTestConfig creates a temporary config file and sets cfgFile to point to it.
+// Returns a cleanup function that should be deferred.
+func setupTestConfig(t *testing.T, configData string) func() {
+	t.Helper()
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, "config.yml")
+
+	if err := os.WriteFile(configPath, []byte(configData), 0644); err != nil {
+		t.Fatalf("Failed to create test config file: %v", err)
+	}
+
+	originalCfgFile := cfgFile
+	cfgFile = configPath
+
+	return func() {
+		cfgFile = originalCfgFile
+	}
+}
+
+// captureStdout captures stdout and returns the captured output and any error.
+// The cleanup is handled automatically via defer.
+func captureStdout(t *testing.T, fn func() error) (string, error) {
+	t.Helper()
+	oldStdout := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("Failed to create pipe: %v", err)
+	}
+	os.Stdout = w
+
+	// Ensure cleanup happens even on panic or early return
+	defer func() {
+		w.Close()
+		os.Stdout = oldStdout
+	}()
+
+	fnErr := fn()
+
+	// Close writer before reading to ensure all data is flushed
+	w.Close()
+	os.Stdout = oldStdout
+
+	var buf bytes.Buffer
+	if _, err := io.Copy(&buf, r); err != nil {
+		t.Fatalf("Failed to read output: %v", err)
+	}
+
+	return buf.String(), fnErr
+}
+
 func TestRunList(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -71,20 +121,7 @@ projects:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create temporary config file
-			tempDir := t.TempDir()
-			configPath := filepath.Join(tempDir, "config.yml")
-
-			if err := os.WriteFile(configPath, []byte(tt.configData), 0644); err != nil {
-				t.Fatalf("Failed to create test config file: %v", err)
-			}
-
-			// Set cfgFile to use our temporary config
-			originalCfgFile := cfgFile
-			cfgFile = configPath
-			defer func() {
-				cfgFile = originalCfgFile
-			}()
+			defer setupTestConfig(t, tt.configData)()
 
 			// Run list
 			err := runList()
@@ -126,20 +163,7 @@ projects:
     branch: main
 `
 
-	// Create temporary config file
-	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "config.yml")
-
-	if err := os.WriteFile(configPath, []byte(configData), 0644); err != nil {
-		t.Fatalf("Failed to create test config file: %v", err)
-	}
-
-	// Set cfgFile to use our temporary config
-	originalCfgFile := cfgFile
-	cfgFile = configPath
-	defer func() {
-		cfgFile = originalCfgFile
-	}()
+	defer setupTestConfig(t, configData)()
 
 	// Run list - should succeed
 	err := runList()
@@ -212,47 +236,13 @@ projects: []
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create temporary config file
-			tempDir := t.TempDir()
-			configPath := filepath.Join(tempDir, "config.yml")
+			defer setupTestConfig(t, tt.configData)()
 
-			if err := os.WriteFile(configPath, []byte(tt.configData), 0644); err != nil {
-				t.Fatalf("Failed to create test config file: %v", err)
-			}
-
-			// Set cfgFile to use our temporary config
-			originalCfgFile := cfgFile
-			cfgFile = configPath
-			defer func() {
-				cfgFile = originalCfgFile
-			}()
-
-			// Capture stdout
-			oldStdout := os.Stdout
-			r, w, err := os.Pipe()
-			if err != nil {
-				t.Fatalf("Failed to create pipe: %v", err)
-			}
-			os.Stdout = w
-
-			// Run list
-			err = runList()
-
-			// Restore stdout
-			w.Close()
-			os.Stdout = oldStdout
-
+			output, err := captureStdout(t, runList)
 			if err != nil {
 				t.Errorf("Expected no error but got: %v", err)
 				return
 			}
-
-			// Read captured output
-			var buf bytes.Buffer
-			if _, err := io.Copy(&buf, r); err != nil {
-				t.Fatalf("Failed to read output: %v", err)
-			}
-			output := buf.String()
 
 			// Validate output contains expected strings
 			for _, expected := range tt.expectedOutput {
@@ -277,46 +267,12 @@ projects:
       - storage/
 `
 
-	// Create temporary config file
-	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "config.yml")
+	defer setupTestConfig(t, configData)()
 
-	if err := os.WriteFile(configPath, []byte(configData), 0644); err != nil {
-		t.Fatalf("Failed to create test config file: %v", err)
-	}
-
-	// Set cfgFile to use our temporary config
-	originalCfgFile := cfgFile
-	cfgFile = configPath
-	defer func() {
-		cfgFile = originalCfgFile
-	}()
-
-	// Capture stdout
-	oldStdout := os.Stdout
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("Failed to create pipe: %v", err)
-	}
-	os.Stdout = w
-
-	// Run list
-	err = runList()
-
-	// Restore stdout
-	w.Close()
-	os.Stdout = oldStdout
-
+	output, err := captureStdout(t, runList)
 	if err != nil {
 		t.Fatalf("Expected no error but got: %v", err)
 	}
-
-	// Read captured output
-	var buf bytes.Buffer
-	if _, err := io.Copy(&buf, r); err != nil {
-		t.Fatalf("Failed to read output: %v", err)
-	}
-	output := buf.String()
 
 	// Verify backup paths are shown as bullet list
 	expectedPaths := []string{
