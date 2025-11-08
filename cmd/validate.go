@@ -40,10 +40,15 @@ var validateCmd = &cobra.Command{
 	},
 }
 
+// init は validateCmd を rootCmd に登録します。
 func init() {
 	rootCmd.AddCommand(validateCmd)
 }
 
+// runValidate は設定ファイルを決定して読み込み、構文および内容を検証します。
+// 設定ファイルパスは明示的な cfgFile を優先し、未指定時はデフォルトパスを使用します。
+// ファイルが存在しない、読み込みに失敗する、パースに失敗する、または設定検証で問題がある場合は error を返します。
+// 成功時は検証成功メッセージとプロジェクト数を標準出力に表示します。
 func runValidate() error {
 	// ja: 設定ファイルパスを決定
 	// en: Determine config file path
@@ -92,7 +97,9 @@ func runValidate() error {
 }
 
 // ja: validateConfig は設定ファイルの内容を検証します
-// en: validateConfig validates the contents of the configuration
+// validateConfig は設定全体の内容を検証します。
+// バージョンが空でないこと、プロジェクトが少なくとも1件存在することを確認し、各プロジェクトについて名前の重複、必須フィールド（名前・リポジトリ・ブランチ）およびバックアップ保持期間が0以上であることを検証します。
+// 検証に失敗した場合は該当するエラーを返します。
 func validateConfig(config *Config) error {
 	// ja: バージョンの検証
 	// en: Validate version
@@ -120,7 +127,9 @@ func validateConfig(config *Config) error {
 }
 
 // ja: validateProject は個々のプロジェクト設定を検証します
-// en: validateProject validates an individual project configuration
+// validateProject は単一の Project 設定を検証します。
+// 空の名前、重複する名前、空のリポジトリまたはブランチ、または 0 未満の backup_retention がある場合に
+// 説明付きの error を返します。正常なら nil を返します。
 func validateProject(project *Project, index int, projectNames map[string]bool) error {
 	projectNum := index + 1
 
