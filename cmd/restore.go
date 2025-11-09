@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bufio"
 	"compress/gzip"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -343,7 +342,7 @@ func validatePathNoSymlinks(baseDir, targetPath string) error {
 
 	relPath, err := filepath.Rel(resolvedBase, resolvedPath)
 	if err != nil || strings.HasPrefix(relPath, "..") {
-		return errors.New(i18n.T("restore.symlinkOutsideDir"))
+		return fmt.Errorf("%s", i18n.T("restore.symlinkOutsideDir"))
 	}
 
 	return nil
