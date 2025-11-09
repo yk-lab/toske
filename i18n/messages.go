@@ -271,7 +271,6 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"backup.backupLocation":           "  バックアップの場所: %s",
 		"backup.flag.project":             "バックアップするプロジェクト名を指定",
 
-<<<<<<< HEAD
 		// Restore command
 		"restore.short":                    "バックアップからプロジェクトファイルを復元",
 		"restore.long":                     "バックアップアーカイブからファイルを復元します。デフォルトでは最新のバックアップから復元します。",
