@@ -255,15 +255,24 @@ func extractBackupArchive(archivePath string) (int, error) {
 
 		fmt.Printf(i18n.T("restore.extractingFile")+"\n", header.Name)
 
-		// ja: ディレクトリを作成
-		// en: Create directory
 		targetDir := filepath.Dir(targetPath)
-		if err := os.MkdirAll(targetDir, 0755); err != nil {
-			return 0, fmt.Errorf(i18n.T("restore.createDirError"), err)
+
+		// ja: シンボリックリンク攻撃を防ぐため、ディレクトリパスを事前に検証
+		// en: Validate directory path before creation to prevent symlink attacks
+		if err := validatePathNoSymlinks(currentDir, targetDir); err != nil {
+			continue
 		}
 
-		// ja: シンボリックリンク攻撃を防ぐため、作成されたパスを検証
-		// en: Validate created path to prevent symlink attacks
+		// ja: ディレクトリを作成
+		// en: Create directory
+		if err := os.MkdirAll(targetDir, 0755); err != nil {
+			// ja: ディレクトリ作成エラーの場合、このファイルをスキップして次へ
+			// en: Skip this file if directory creation fails and continue with next
+			continue
+		}
+
+		// ja: ファイルパス全体を再検証（MkdirAll後の安全性確認）
+		// en: Re-validate full file path after directory creation for additional safety
 		if err := validatePathNoSymlinks(currentDir, targetPath); err != nil {
 			continue
 		}
