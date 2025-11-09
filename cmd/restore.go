@@ -262,6 +262,12 @@ func extractBackupArchive(archivePath string) (int, error) {
 			return 0, fmt.Errorf(i18n.T("restore.createDirError"), err)
 		}
 
+		// ja: シンボリックリンク攻撃を防ぐため、作成されたパスを検証
+		// en: Validate created path to prevent symlink attacks
+		if err := validatePathNoSymlinks(currentDir, targetPath); err != nil {
+			continue
+		}
+
 		// ja: ファイルを作成
 		// en: Create file
 		outFile, err := os.Create(targetPath)
@@ -287,4 +293,35 @@ func extractBackupArchive(archivePath string) (int, error) {
 	}
 
 	return fileCount, nil
+}
+
+// ja: validatePathNoSymlinks はパスにシンボリックリンクが含まれていないことを検証します
+// en: validatePathNoSymlinks validates that the path contains no symlinks
+func validatePathNoSymlinks(baseDir, targetPath string) error {
+	// ja: シンボリックリンクを解決して実際のパスを取得
+	// en: Resolve symlinks to get the actual path
+	resolvedPath, err := filepath.EvalSymlinks(targetPath)
+	if err != nil {
+		// ja: パスが存在しない場合、親ディレクトリまで確認
+		// en: If path doesn't exist, check parent directory
+		parentDir := filepath.Dir(targetPath)
+		if parentDir == targetPath {
+			return nil // Root directory reached
+		}
+		return validatePathNoSymlinks(baseDir, parentDir)
+	}
+
+	// ja: 解決されたパスが base ディレクトリ内にあることを確認
+	// en: Ensure resolved path is within base directory
+	resolvedBase, err := filepath.EvalSymlinks(baseDir)
+	if err != nil {
+		return err
+	}
+
+	relPath, err := filepath.Rel(resolvedBase, resolvedPath)
+	if err != nil || strings.HasPrefix(relPath, "..") {
+		return fmt.Errorf("symlink points outside restore directory")
+	}
+
+	return nil
 }

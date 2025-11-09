@@ -551,6 +551,96 @@ func TestExtractBackupArchivePathTraversal(t *testing.T) {
 	}
 }
 
+func TestExtractBackupArchiveSymlinkAttack(t *testing.T) {
+	// Setup temporary directory
+	tempDir := t.TempDir()
+	workDir := filepath.Join(tempDir, "work")
+	attackTarget := filepath.Join(tempDir, "attack_target")
+
+	if err := os.MkdirAll(workDir, 0755); err != nil {
+		t.Fatalf("Failed to create work directory: %v", err)
+	}
+	if err := os.MkdirAll(attackTarget, 0755); err != nil {
+		t.Fatalf("Failed to create attack target directory: %v", err)
+	}
+
+	// Create a symlink in work directory pointing to attack target
+	symlinkPath := filepath.Join(workDir, "backup")
+	if err := os.Symlink(attackTarget, symlinkPath); err != nil {
+		t.Fatalf("Failed to create symlink: %v", err)
+	}
+
+	// Create an archive that tries to write through the symlink
+	archivePath := filepath.Join(tempDir, "symlink_attack.tar.gz")
+	archiveFile, err := os.Create(archivePath)
+	if err != nil {
+		t.Fatalf("Failed to create archive file: %v", err)
+	}
+	defer archiveFile.Close()
+
+	gzipWriter := gzip.NewWriter(archiveFile)
+	defer gzipWriter.Close()
+
+	tarWriter := tar.NewWriter(gzipWriter)
+	defer tarWriter.Close()
+
+	// Try to write a file through the symlink
+	maliciousContent := "SYMLINK ATTACK SUCCESS"
+	header := &tar.Header{
+		Name:    "backup/passwd",
+		Size:    int64(len(maliciousContent)),
+		Mode:    0644,
+		ModTime: time.Now(),
+	}
+	if err := tarWriter.WriteHeader(header); err != nil {
+		t.Fatalf("Failed to write tar header: %v", err)
+	}
+	if _, err := tarWriter.Write([]byte(maliciousContent)); err != nil {
+		t.Fatalf("Failed to write tar content: %v", err)
+	}
+
+	tarWriter.Close()
+	gzipWriter.Close()
+	archiveFile.Close()
+
+	// Change to work directory
+	originalWd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get working directory: %v", err)
+	}
+	defer os.Chdir(originalWd)
+
+	if err := os.Chdir(workDir); err != nil {
+		t.Fatalf("Failed to change directory: %v", err)
+	}
+
+	// Extract archive - should skip the file due to symlink
+	fileCount, err := extractBackupArchive(archivePath)
+	if err != nil {
+		t.Fatalf("Failed to extract archive: %v", err)
+	}
+
+	// Should extract 0 files (symlink should be detected)
+	if fileCount != 0 {
+		t.Errorf("Expected 0 files to be extracted (symlink detected), got %d", fileCount)
+	}
+
+	// Verify the attack target was not modified
+	attackFile := filepath.Join(attackTarget, "passwd")
+	if data, err := os.ReadFile(attackFile); err == nil {
+		t.Errorf("Security vulnerability: symlink was followed, file created with content: %s", string(data))
+	}
+
+	// Verify symlink still exists and wasn't replaced
+	linkInfo, err := os.Lstat(symlinkPath)
+	if err != nil {
+		t.Fatalf("Symlink was removed or modified: %v", err)
+	}
+	if linkInfo.Mode()&os.ModeSymlink == 0 {
+		t.Error("Symlink was replaced with a regular file or directory")
+	}
+}
+
 // Helper types and functions
 
 type testFile struct {
