@@ -236,13 +236,20 @@ func extractBackupArchive(archivePath string) (int, error) {
 			continue
 		}
 
+		// ja: セキュリティチェック：絶対パスとパストラバーサル攻撃を防ぐ
+		// en: Security check: prevent absolute paths and path traversal attacks
+		if filepath.IsAbs(header.Name) {
+			continue
+		}
+
 		// ja: ファイルパスを決定
 		// en: Determine file path
 		targetPath := filepath.Join(currentDir, header.Name)
 
-		// ja: セキュリティチェック：パストラバーサル攻撃を防ぐ
-		// en: Security check: prevent path traversal attacks
-		if !strings.HasPrefix(filepath.Clean(targetPath), filepath.Clean(currentDir)) {
+		// ja: 相対パスでの追加セキュリティチェック
+		// en: Additional security check with relative path
+		relPath, err := filepath.Rel(currentDir, targetPath)
+		if err != nil || strings.HasPrefix(relPath, "..") {
 			continue
 		}
 

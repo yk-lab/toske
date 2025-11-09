@@ -447,6 +447,110 @@ func TestExtractBackupArchive(t *testing.T) {
 	}
 }
 
+func TestExtractBackupArchivePathTraversal(t *testing.T) {
+	// Setup temporary directory
+	tempDir := t.TempDir()
+	workDir := filepath.Join(tempDir, "work")
+	siblingDir := filepath.Join(tempDir, "sibling")
+
+	if err := os.MkdirAll(workDir, 0755); err != nil {
+		t.Fatalf("Failed to create work directory: %v", err)
+	}
+	if err := os.MkdirAll(siblingDir, 0755); err != nil {
+		t.Fatalf("Failed to create sibling directory: %v", err)
+	}
+
+	// Create an archive with path traversal attempts
+	archivePath := filepath.Join(tempDir, "malicious.tar.gz")
+	archiveFile, err := os.Create(archivePath)
+	if err != nil {
+		t.Fatalf("Failed to create archive file: %v", err)
+	}
+	defer archiveFile.Close()
+
+	gzipWriter := gzip.NewWriter(archiveFile)
+	defer gzipWriter.Close()
+
+	tarWriter := tar.NewWriter(gzipWriter)
+	defer tarWriter.Close()
+
+	// Attempt various path traversal attacks
+	maliciousFiles := []struct {
+		name    string
+		content string
+	}{
+		{name: "../escape.txt", content: "escaped"},
+		{name: "../../escape2.txt", content: "escaped2"},
+		{name: "../sibling/attack.txt", content: "attacked"},
+		{name: filepath.Join(tempDir, "absolute_attack.txt"), content: "absolute path attack"},
+	}
+
+	for _, mf := range maliciousFiles {
+		header := &tar.Header{
+			Name:    mf.name,
+			Size:    int64(len(mf.content)),
+			Mode:    0644,
+			ModTime: time.Now(),
+		}
+		if err := tarWriter.WriteHeader(header); err != nil {
+			t.Fatalf("Failed to write tar header: %v", err)
+		}
+		if _, err := tarWriter.Write([]byte(mf.content)); err != nil {
+			t.Fatalf("Failed to write tar content: %v", err)
+		}
+	}
+
+	tarWriter.Close()
+	gzipWriter.Close()
+	archiveFile.Close()
+
+	// Change to work directory
+	originalWd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get working directory: %v", err)
+	}
+	defer os.Chdir(originalWd)
+
+	if err := os.Chdir(workDir); err != nil {
+		t.Fatalf("Failed to change directory: %v", err)
+	}
+
+	// Extract archive - should skip all malicious files
+	fileCount, err := extractBackupArchive(archivePath)
+	if err != nil {
+		t.Fatalf("Failed to extract archive: %v", err)
+	}
+
+	// Should extract 0 files (all were malicious)
+	if fileCount != 0 {
+		t.Errorf("Expected 0 files to be extracted (all malicious), got %d", fileCount)
+	}
+
+	// Verify no files escaped the work directory
+	escapedFiles := []string{
+		filepath.Join(tempDir, "escape.txt"),
+		filepath.Join(tempDir, "escape2.txt"),
+		filepath.Join(siblingDir, "attack.txt"),
+		filepath.Join(tempDir, "absolute_attack.txt"),
+	}
+
+	for _, escapedFile := range escapedFiles {
+		data, err := os.ReadFile(escapedFile)
+		if err == nil {
+			t.Errorf("Security vulnerability: file escaped to %s with content: %s", escapedFile, string(data))
+		}
+	}
+
+	// Verify work directory is still empty
+	entries, err := os.ReadDir(workDir)
+	if err != nil {
+		t.Fatalf("Failed to read work directory: %v", err)
+	}
+	if len(entries) > 0 {
+		t.Errorf("Expected work directory to be empty, but found %d entries", len(entries))
+	}
+}
+
 // Helper types and functions
 
 type testFile struct {
