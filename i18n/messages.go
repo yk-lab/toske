@@ -120,9 +120,11 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"delete.confirmPrompt": "Are you sure you want to delete project '%s'? [y/N]: ",
 		"delete.cancelled":     "Deletion cancelled.",
 		"delete.readInputError": "Failed to read input: %v",
+		"delete.marshalError":  "Failed to marshal configuration: %v",
 		"delete.writeError":    "Failed to write configuration file: %v",
 		"delete.success":       "✓ Project '%s' has been successfully deleted from configuration.",
 		"delete.flag.project":  "Specify the project name to delete",
+		"delete.flag.force":    "Skip confirmation prompt (use with caution)",
 
 		// Config
 		"config.legacyWarning":       "⚠️  WARNING: You are using a legacy configuration file location.",
@@ -248,9 +250,11 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"delete.confirmPrompt": "プロジェクト '%s' を本当に削除しますか？ [y/N]: ",
 		"delete.cancelled":     "削除をキャンセルしました。",
 		"delete.readInputError": "入力の読み取りに失敗しました: %v",
+		"delete.marshalError":  "設定のマーシャルに失敗しました: %v",
 		"delete.writeError":    "設定ファイルの書き込みに失敗しました: %v",
 		"delete.success":       "✓ プロジェクト '%s' を設定から正常に削除しました。",
 		"delete.flag.project":  "削除するプロジェクト名を指定",
+		"delete.flag.force":    "確認プロンプトをスキップ（注意して使用してください）",
 
 		// Config
 		"config.legacyWarning":       "⚠️  警告: レガシーの設定ファイル位置を使用しています。",
