@@ -347,6 +347,172 @@ projects:
 	}
 }
 
+// TestDeleteProjectNameWithWhitespace tests that project names with whitespace are trimmed
+func TestDeleteProjectNameWithWhitespace(t *testing.T) {
+	configData := `version: 1.0.0
+projects:
+  - name: test-project
+    repo: git@github.com:user/test.git
+    branch: main
+`
+
+	defer setupTestConfig(t, configData)()
+
+	// Setup stdin to confirm deletion
+	tmpfile, err := os.CreateTemp("", "stdin")
+	if err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	if _, err := tmpfile.WriteString("y\n"); err != nil {
+		t.Fatalf("Failed to write to temp file: %v", err)
+	}
+
+	if _, err := tmpfile.Seek(0, 0); err != nil {
+		t.Fatalf("Failed to seek temp file: %v", err)
+	}
+
+	oldStdin := os.Stdin
+	os.Stdin = tmpfile
+	defer func() {
+		os.Stdin = oldStdin
+		tmpfile.Close()
+	}()
+
+	// Delete with whitespace around project name
+	originalProjectName := deleteProjectName
+	deleteProjectName = "  test-project  "
+	defer func() { deleteProjectName = originalProjectName }()
+
+	err = runDelete()
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	// Verify project was deleted
+	v := viper.New()
+	v.SetConfigFile(cfgFile)
+	if err := v.ReadInConfig(); err != nil {
+		t.Fatalf("Failed to read config: %v", err)
+	}
+
+	var config Config
+	if err := v.Unmarshal(&config); err != nil {
+		t.Fatalf("Failed to unmarshal config: %v", err)
+	}
+
+	if len(config.Projects) != 0 {
+		t.Errorf("Expected project to be deleted despite whitespace in flag, but found %d projects", len(config.Projects))
+	}
+}
+
+// TestDeletePreservesYAMLFormat tests that deleting a project preserves correct YAML field names
+func TestDeletePreservesYAMLFormat(t *testing.T) {
+	configData := `version: 1.0.0
+projects:
+  - name: project-one
+    repo: git@github.com:user/one.git
+    branch: main
+    backup_paths:
+      - .env
+      - db.sqlite3
+    backup_retention: 3
+  - name: project-two
+    repo: git@github.com:user/two.git
+    branch: develop
+    backup_paths:
+      - config/
+    backup_retention: 5
+`
+
+	defer setupTestConfig(t, configData)()
+
+	// Setup stdin to confirm deletion
+	tmpfile, err := os.CreateTemp("", "stdin")
+	if err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	if _, err := tmpfile.WriteString("y\n"); err != nil {
+		t.Fatalf("Failed to write to temp file: %v", err)
+	}
+
+	if _, err := tmpfile.Seek(0, 0); err != nil {
+		t.Fatalf("Failed to seek temp file: %v", err)
+	}
+
+	oldStdin := os.Stdin
+	os.Stdin = tmpfile
+	defer func() {
+		os.Stdin = oldStdin
+		tmpfile.Close()
+	}()
+
+	// Delete project-one
+	originalProjectName := deleteProjectName
+	deleteProjectName = "project-one"
+	defer func() { deleteProjectName = originalProjectName }()
+
+	err = runDelete()
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	// Read the raw YAML file to verify field names
+	rawYAML, err := os.ReadFile(cfgFile)
+	if err != nil {
+		t.Fatalf("Failed to read config file: %v", err)
+	}
+
+	yamlContent := string(rawYAML)
+
+	// Verify that the YAML uses snake_case field names, not Go field names
+	if !strings.Contains(yamlContent, "backup_paths:") {
+		t.Error("Expected YAML to contain 'backup_paths:' but it doesn't")
+	}
+	if !strings.Contains(yamlContent, "backup_retention:") {
+		t.Error("Expected YAML to contain 'backup_retention:' but it doesn't")
+	}
+
+	// Verify it doesn't use Go field names
+	if strings.Contains(yamlContent, "backuppaths") {
+		t.Error("YAML should not contain Go field name 'backuppaths'")
+	}
+	if strings.Contains(yamlContent, "backupretention") {
+		t.Error("YAML should not contain Go field name 'backupretention'")
+	}
+
+	// Verify that we can still read the config with viper
+	v := viper.New()
+	v.SetConfigFile(cfgFile)
+	if err := v.ReadInConfig(); err != nil {
+		t.Fatalf("Failed to read config after deletion: %v", err)
+	}
+
+	var config Config
+	if err := v.Unmarshal(&config); err != nil {
+		t.Fatalf("Failed to unmarshal config: %v", err)
+	}
+
+	// Verify project-two still has its backup paths and retention
+	if len(config.Projects) != 1 {
+		t.Fatalf("Expected 1 project, got %d", len(config.Projects))
+	}
+
+	project := config.Projects[0]
+	if project.Name != "project-two" {
+		t.Errorf("Expected project-two, got %s", project.Name)
+	}
+	if len(project.BackupPaths) != 1 {
+		t.Errorf("Expected 1 backup path, got %d - YAML field names may be corrupted", len(project.BackupPaths))
+	}
+	if project.BackupRetention != 5 {
+		t.Errorf("Expected backup retention 5, got %d - YAML field names may be corrupted", project.BackupRetention)
+	}
+}
+
 // TestDeleteMultipleProjectsOrder tests that deleting a project maintains the order of remaining projects
 func TestDeleteMultipleProjectsOrder(t *testing.T) {
 	configData := `version: 1.0.0

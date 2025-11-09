@@ -40,6 +40,10 @@ func runDelete() error {
 		return fmt.Errorf("%s", i18n.T("delete.noProjectFlag"))
 	}
 
+	// ja: プロジェクト名の前後の空白を削除
+	// en: Trim leading and trailing whitespace from project name
+	deleteProjectName = strings.TrimSpace(deleteProjectName)
+
 	// ja: 設定ファイルパスを決定
 	// en: Determine config file path
 	configPath := cfgFile
