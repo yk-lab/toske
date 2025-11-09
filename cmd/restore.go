@@ -1,0 +1,349 @@
+package cmd
+
+import (
+	"archive/tar"
+	"bufio"
+	"compress/gzip"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/yk-lab/toske/i18n"
+	"gopkg.in/yaml.v3"
+)
+
+var (
+	restoreProjectName string
+	backupIndex        int
+	forceRestore       bool
+)
+
+// ja: restoreCmd は restore コマンドを表します
+// en: restoreCmd represents the restore command
+var restoreCmd = &cobra.Command{
+	Use:   "restore",
+	Short: i18n.T("restore.short"),
+	Long:  i18n.T("restore.long"),
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := runRestore(); err != nil {
+			fmt.Fprintf(os.Stderr, i18n.T("common.error")+"\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(restoreCmd)
+	restoreCmd.Flags().StringVarP(&restoreProjectName, "project", "p", "", i18n.T("restore.flag.project"))
+	restoreCmd.Flags().IntVarP(&backupIndex, "backup", "b", 1, i18n.T("restore.flag.backup"))
+	restoreCmd.Flags().BoolVarP(&forceRestore, "force", "f", false, i18n.T("restore.flag.force"))
+}
+
+func runRestore() error {
+	// ja: プロジェクト名が指定されているかチェック
+	// en: Check if project name is specified
+	if restoreProjectName == "" {
+		return fmt.Errorf("%s", i18n.T("restore.noProjectFlag"))
+	}
+
+	// ja: 設定ファイルパスを決定
+	// en: Determine config file path
+	configPath := cfgFile
+	if configPath == "" {
+		configPath = getDefaultConfigPath()
+	}
+
+	// ja: 設定ファイルが存在するかチェック
+	// en: Check if config file exists
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		return fmt.Errorf(i18n.T("restore.noConfig"), configPath)
+	}
+
+	// ja: 設定ファイルを読み込む
+	// en: Load configuration file
+	v := viper.New()
+	v.SetConfigFile(configPath)
+
+	if err := v.ReadInConfig(); err != nil {
+		return fmt.Errorf(i18n.T("restore.readError"), err)
+	}
+
+	// ja: 設定を構造体にアンマーシャル
+	// en: Unmarshal config into struct
+	var config Config
+	if err := v.Unmarshal(&config); err != nil {
+		return fmt.Errorf(i18n.T("restore.parseError"), err)
+	}
+
+	// ja: 指定されたプロジェクトを検索
+	// en: Find the specified project
+	var project *Project
+	for i := range config.Projects {
+		if config.Projects[i].Name == restoreProjectName {
+			project = &config.Projects[i]
+			break
+		}
+	}
+
+	if project == nil {
+		return fmt.Errorf(i18n.T("restore.projectNotFound"), restoreProjectName)
+	}
+
+	// ja: バックアップディレクトリを取得
+	// en: Get backup directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	backupDir := filepath.Join(homeDir, ".config", "toske", "backups", project.Name)
+
+	// ja: バックアップディレクトリが存在するかチェック
+	// en: Check if backup directory exists
+	if _, err := os.Stat(backupDir); os.IsNotExist(err) {
+		return fmt.Errorf(i18n.T("restore.noBackupDir"), project.Name)
+	}
+
+	// ja: メタデータファイルを読み込む
+	// en: Load metadata file
+	metadataPath := filepath.Join(backupDir, "backups.yaml")
+	if _, err := os.Stat(metadataPath); os.IsNotExist(err) {
+		return fmt.Errorf(i18n.T("restore.noMetadata"), project.Name)
+	}
+
+	data, err := os.ReadFile(metadataPath)
+	if err != nil {
+		return fmt.Errorf(i18n.T("restore.readMetadataError"), err)
+	}
+
+	var metadata BackupMetadata
+	if err := yaml.Unmarshal(data, &metadata); err != nil {
+		return fmt.Errorf(i18n.T("restore.parseMetadataError"), err)
+	}
+
+	// ja: バックアップが存在するかチェック
+	// en: Check if backups exist
+	if len(metadata.Backups) == 0 {
+		return fmt.Errorf(i18n.T("restore.noBackups"), project.Name)
+	}
+
+	// ja: バックアップインデックスが有効かチェック
+	// en: Check if backup index is valid
+	if backupIndex < 1 || backupIndex > len(metadata.Backups) {
+		return fmt.Errorf(i18n.T("restore.invalidBackupIndex"), backupIndex, len(metadata.Backups))
+	}
+
+	// ja: 復元するバックアップを選択（1-indexed）
+	// en: Select backup to restore (1-indexed)
+	selectedBackup := metadata.Backups[backupIndex-1]
+	archivePath := filepath.Join(backupDir, selectedBackup.Filename)
+
+	// ja: アーカイブファイルが存在するかチェック
+	// en: Check if archive file exists
+	if _, err := os.Stat(archivePath); os.IsNotExist(err) {
+		return fmt.Errorf(i18n.T("restore.backupNotFound"), selectedBackup.Filename)
+	}
+
+	// ja: 選択したバックアップ情報を表示
+	// en: Display selected backup information
+	fmt.Printf(i18n.T("restore.selectingBackup")+"\n", selectedBackup.Filename, selectedBackup.Timestamp.Format("2006-01-02 15:04:05"))
+
+	// ja: 確認プロンプト（--force フラグが指定されていない場合）
+	// en: Confirmation prompt (if --force flag is not specified)
+	if !forceRestore {
+		fmt.Println(i18n.T("restore.confirmOverwrite"))
+		fmt.Print(i18n.T("restore.confirmPrompt"))
+
+		reader := bufio.NewReader(os.Stdin)
+		response, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf(i18n.T("restore.readInputError"), err)
+		}
+
+		response = strings.TrimSpace(strings.ToLower(response))
+		if response != "y" && response != "yes" {
+			fmt.Println(i18n.T("restore.cancelled"))
+			return nil
+		}
+	}
+
+	// ja: ファイルを復元
+	// en: Restore files
+	fmt.Println(i18n.T("restore.restoringFiles"))
+
+	fileCount, err := extractBackupArchive(archivePath)
+	if err != nil {
+		return fmt.Errorf(i18n.T("restore.extractError"), err)
+	}
+
+	fmt.Println()
+	fmt.Println(i18n.T("restore.success"))
+	fmt.Printf(i18n.T("restore.restoredFiles")+"\n", fileCount)
+
+	return nil
+}
+
+// ja: extractBackupArchive はバックアップアーカイブを展開します
+// en: extractBackupArchive extracts a backup archive
+func extractBackupArchive(archivePath string) (int, error) {
+	// ja: アーカイブファイルを開く
+	// en: Open archive file
+	archiveFile, err := os.Open(archivePath)
+	if err != nil {
+		return 0, fmt.Errorf(i18n.T("restore.openArchiveError"), err)
+	}
+	defer archiveFile.Close()
+
+	// ja: gzip リーダーを作成
+	// en: Create gzip reader
+	gzipReader, err := gzip.NewReader(archiveFile)
+	if err != nil {
+		return 0, err
+	}
+	defer gzipReader.Close()
+
+	// ja: tar リーダーを作成
+	// en: Create tar reader
+	tarReader := tar.NewReader(gzipReader)
+
+	// ja: カレントディレクトリを取得
+	// en: Get current directory
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return 0, err
+	}
+
+	fileCount := 0
+
+	// ja: アーカイブ内の各ファイルを処理
+	// en: Process each file in the archive
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return 0, err
+		}
+
+		// ja: ディレクトリエントリはスキップ（ファイル作成時に自動的に作成される）
+		// en: Skip directory entries (they will be created automatically when creating files)
+		if header.Typeflag == tar.TypeDir {
+			continue
+		}
+
+		// ja: セキュリティチェック：絶対パスとパストラバーサル攻撃を防ぐ
+		// en: Security check: prevent absolute paths and path traversal attacks
+		if filepath.IsAbs(header.Name) {
+			continue
+		}
+
+		// ja: ファイルパスを決定
+		// en: Determine file path
+		targetPath := filepath.Join(currentDir, header.Name)
+
+		// ja: 相対パスでの追加セキュリティチェック
+		// en: Additional security check with relative path
+		relPath, err := filepath.Rel(currentDir, targetPath)
+		if err != nil || strings.HasPrefix(relPath, "..") {
+			continue
+		}
+
+		fmt.Printf(i18n.T("restore.extractingFile")+"\n", header.Name)
+
+		targetDir := filepath.Dir(targetPath)
+
+		// ja: シンボリックリンク攻撃を防ぐため、ディレクトリパスを事前に検証
+		// en: Validate directory path before creation to prevent symlink attacks
+		if err := validatePathNoSymlinks(currentDir, targetDir); err != nil {
+			continue
+		}
+
+		// ja: ディレクトリを作成
+		// en: Create directory
+		if err := os.MkdirAll(targetDir, 0755); err != nil {
+			// ja: ディレクトリ作成エラーの場合、このファイルをスキップして次へ
+			// en: Skip this file if directory creation fails and continue with next
+			continue
+		}
+
+		// ja: ファイルパス全体を再検証（MkdirAll後の安全性確認）
+		// en: Re-validate full file path after directory creation for additional safety
+		if err := validatePathNoSymlinks(currentDir, targetPath); err != nil {
+			continue
+		}
+
+		// ja: ファイルを作成
+		// en: Create file
+		outFile, err := os.Create(targetPath)
+		if err != nil {
+			// ja: ファイル作成エラー - 警告を表示して次のファイルへ
+			// en: File creation error - log warning and continue with next file
+			fmt.Fprintf(os.Stderr, i18n.T("restore.fileCreateWarning")+"\n", header.Name, err)
+			continue
+		}
+
+		// ja: ファイル内容をコピー
+		// en: Copy file contents
+		if _, err := io.Copy(outFile, tarReader); err != nil {
+			outFile.Close()
+			// ja: 部分的なファイルを削除
+			// en: Remove partial file
+			os.Remove(targetPath)
+			// ja: コピーエラー - 警告を表示して次のファイルへ
+			// en: Copy error - log warning and continue with next file
+			fmt.Fprintf(os.Stderr, i18n.T("restore.fileCopyWarning")+"\n", header.Name, err)
+			continue
+		}
+		outFile.Close()
+
+		// ja: ファイルのパーミッションを設定
+		// en: Set file permissions
+		if err := os.Chmod(targetPath, os.FileMode(header.Mode)); err != nil {
+			// ja: パーミッション設定エラー - 警告を表示するが、ファイルは保持
+			// en: Chmod error - log warning but keep the file
+			fmt.Fprintf(os.Stderr, i18n.T("restore.fileChmodWarning")+"\n", header.Name, err)
+			// ja: パーミッション設定に失敗してもファイルはカウント
+			// en: Count file even if chmod failed
+		}
+
+		fileCount++
+	}
+
+	return fileCount, nil
+}
+
+// ja: validatePathNoSymlinks はパスにシンボリックリンクが含まれていないことを検証します
+// en: validatePathNoSymlinks validates that the path contains no symlinks
+func validatePathNoSymlinks(baseDir, targetPath string) error {
+	// ja: シンボリックリンクを解決して実際のパスを取得
+	// en: Resolve symlinks to get the actual path
+	resolvedPath, err := filepath.EvalSymlinks(targetPath)
+	if err != nil {
+		// ja: パスが存在しない場合、親ディレクトリまで確認
+		// en: If path doesn't exist, check parent directory
+		parentDir := filepath.Dir(targetPath)
+		if parentDir == targetPath {
+			return nil // Root directory reached
+		}
+		return validatePathNoSymlinks(baseDir, parentDir)
+	}
+
+	// ja: 解決されたパスが base ディレクトリ内にあることを確認
+	// en: Ensure resolved path is within base directory
+	resolvedBase, err := filepath.EvalSymlinks(baseDir)
+	if err != nil {
+		return err
+	}
+
+	relPath, err := filepath.Rel(resolvedBase, resolvedPath)
+	if err != nil || strings.HasPrefix(relPath, "..") {
+		return fmt.Errorf("%s", i18n.T("restore.symlinkOutsideDir"))
+	}
+
+	return nil
+}
