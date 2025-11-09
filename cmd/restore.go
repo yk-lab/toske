@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bufio"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -281,21 +282,34 @@ func extractBackupArchive(archivePath string) (int, error) {
 		// en: Create file
 		outFile, err := os.Create(targetPath)
 		if err != nil {
-			return 0, fmt.Errorf(i18n.T("restore.writeFileError"), err)
+			// ja: ファイル作成エラー - 警告を表示して次のファイルへ
+			// en: File creation error - log warning and continue with next file
+			fmt.Fprintf(os.Stderr, i18n.T("restore.fileCreateWarning")+"\n", header.Name, err)
+			continue
 		}
 
 		// ja: ファイル内容をコピー
 		// en: Copy file contents
 		if _, err := io.Copy(outFile, tarReader); err != nil {
 			outFile.Close()
-			return 0, err
+			// ja: 部分的なファイルを削除
+			// en: Remove partial file
+			os.Remove(targetPath)
+			// ja: コピーエラー - 警告を表示して次のファイルへ
+			// en: Copy error - log warning and continue with next file
+			fmt.Fprintf(os.Stderr, i18n.T("restore.fileCopyWarning")+"\n", header.Name, err)
+			continue
 		}
 		outFile.Close()
 
 		// ja: ファイルのパーミッションを設定
 		// en: Set file permissions
 		if err := os.Chmod(targetPath, os.FileMode(header.Mode)); err != nil {
-			return 0, err
+			// ja: パーミッション設定エラー - 警告を表示するが、ファイルは保持
+			// en: Chmod error - log warning but keep the file
+			fmt.Fprintf(os.Stderr, i18n.T("restore.fileChmodWarning")+"\n", header.Name, err)
+			// ja: パーミッション設定に失敗してもファイルはカウント
+			// en: Count file even if chmod failed
 		}
 
 		fileCount++
@@ -329,7 +343,7 @@ func validatePathNoSymlinks(baseDir, targetPath string) error {
 
 	relPath, err := filepath.Rel(resolvedBase, resolvedPath)
 	if err != nil || strings.HasPrefix(relPath, "..") {
-		return fmt.Errorf("symlink points outside restore directory")
+		return errors.New(i18n.T("restore.symlinkOutsideDir"))
 	}
 
 	return nil

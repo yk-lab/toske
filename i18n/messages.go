@@ -140,6 +140,10 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"restore.confirmPrompt":            "Do you want to continue? [y/N]: ",
 		"restore.cancelled":                "Restore cancelled.",
 		"restore.readInputError":           "Failed to read input: %v",
+		"restore.symlinkOutsideDir":        "symlink points outside restore directory",
+		"restore.fileCreateWarning":        "  ⚠ Warning: Failed to create file %s: %v",
+		"restore.fileCopyWarning":          "  ⚠ Warning: Failed to copy file %s: %v",
+		"restore.fileChmodWarning":         "  ⚠ Warning: Failed to set permissions for %s: %v",
 
 		// Delete command
 		"delete.short":         "Delete a project from configuration",
@@ -302,6 +306,10 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"restore.confirmPrompt":            "続行しますか？ [y/N]: ",
 		"restore.cancelled":                "復元をキャンセルしました。",
 		"restore.readInputError":           "入力の読み取りに失敗しました: %v",
+		"restore.symlinkOutsideDir":        "シンボリックリンクが復元ディレクトリ外を指しています",
+		"restore.fileCreateWarning":        "  ⚠ 警告: ファイル %s の作成に失敗しました: %v",
+		"restore.fileCopyWarning":          "  ⚠ 警告: ファイル %s のコピーに失敗しました: %v",
+		"restore.fileChmodWarning":         "  ⚠ 警告: ファイル %s のパーミッション設定に失敗しました: %v",
 
 		// Delete command
 		"delete.short":         "設定からプロジェクトを削除",
