@@ -162,6 +162,23 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"delete.flag.project":  "Specify the project name to delete",
 		"delete.flag.force":    "Skip confirmation prompt (use with caution)",
 
+		// Remove command
+		"remove.short":         "Remove a project from configuration",
+		"remove.long":          "Remove a project from the configuration file. This does not delete any backup files.",
+		"remove.noConfig":      "Configuration file does not exist: %s\nRun 'toske init' to create one.",
+		"remove.readError":     "Failed to read configuration file: %v",
+		"remove.parseError":    "Failed to parse configuration file: %v",
+		"remove.noProjectFlag": "Project name is required. Use --project flag to specify the project.",
+		"remove.projectNotFound": "Project '%s' not found in configuration file.",
+		"remove.confirmPrompt": "Are you sure you want to remove project '%s' from configuration? [y/N]: ",
+		"remove.cancelled":     "Removal cancelled.",
+		"remove.readInputError": "Failed to read input: %v",
+		"remove.marshalError":  "Failed to marshal configuration: %v",
+		"remove.writeError":    "Failed to write configuration file: %v",
+		"remove.success":       "✓ Project '%s' has been successfully removed from configuration.",
+		"remove.flag.project":  "Specify the project name to remove",
+		"remove.flag.force":    "Skip confirmation prompt (use with caution)",
+
 		// Config
 		"config.legacyWarning":       "⚠️  WARNING: You are using a legacy configuration file location.",
 		"config.legacyWarningDetail": "   Please migrate to ~/.config/toske/config.yml by running: mv ~/.toske.yaml ~/.config/toske/config.yml",
@@ -327,6 +344,23 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"delete.success":       "✓ プロジェクト '%s' を設定から正常に削除しました。",
 		"delete.flag.project":  "削除するプロジェクト名を指定",
 		"delete.flag.force":    "確認プロンプトをスキップ（注意して使用してください）",
+
+		// Remove command
+		"remove.short":         "設定からプロジェクトを除外",
+		"remove.long":          "設定ファイルからプロジェクトを除外します。バックアップファイルは削除されません。",
+		"remove.noConfig":      "設定ファイルが存在しません: %s\n'toske init' を実行して作成してください。",
+		"remove.readError":     "設定ファイルの読み込みに失敗しました: %v",
+		"remove.parseError":    "設定ファイルのパースに失敗しました: %v",
+		"remove.noProjectFlag": "プロジェクト名が必要です。--project フラグを使用してプロジェクトを指定してください。",
+		"remove.projectNotFound": "プロジェクト '%s' が設定ファイルに見つかりません。",
+		"remove.confirmPrompt": "プロジェクト '%s' を設定から本当に除外しますか？ [y/N]: ",
+		"remove.cancelled":     "除外をキャンセルしました。",
+		"remove.readInputError": "入力の読み取りに失敗しました: %v",
+		"remove.marshalError":  "設定のマーシャルに失敗しました: %v",
+		"remove.writeError":    "設定ファイルの書き込みに失敗しました: %v",
+		"remove.success":       "✓ プロジェクト '%s' を設定から正常に除外しました。",
+		"remove.flag.project":  "除外するプロジェクト名を指定",
+		"remove.flag.force":    "確認プロンプトをスキップ（注意して使用してください）",
 
 		// Config
 		"config.legacyWarning":       "⚠️  警告: レガシーの設定ファイル位置を使用しています。",
