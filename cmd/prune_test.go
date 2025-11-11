@@ -16,6 +16,7 @@ func TestRunPrune(t *testing.T) {
 		projectName       string
 		all               bool
 		keep              int
+		keepExplicit      bool
 		configData        string
 		setupBackups      func(t *testing.T, homeDir string)
 		expectError       bool
@@ -23,10 +24,11 @@ func TestRunPrune(t *testing.T) {
 		validateResult    func(t *testing.T, homeDir string)
 	}{
 		{
-			name:        "prune specific project with --keep",
-			projectName: "test-project",
-			all:         false,
-			keep:        2,
+			name:         "prune specific project with --keep",
+			projectName:  "test-project",
+			all:          false,
+			keep:         2,
+			keepExplicit: true,
 			configData: `version: 1.0.0
 projects:
   - name: test-project
@@ -49,10 +51,11 @@ projects:
 			},
 		},
 		{
-			name:        "prune specific project with backup_retention",
-			projectName: "test-project",
-			all:         false,
-			keep:        0,
+			name:         "prune specific project with backup_retention",
+			projectName:  "test-project",
+			all:          false,
+			keep:         0,
+			keepExplicit: false,
 			configData: `version: 1.0.0
 projects:
   - name: test-project
@@ -75,10 +78,11 @@ projects:
 			},
 		},
 		{
-			name:        "prune all projects",
-			projectName: "",
-			all:         true,
-			keep:        2,
+			name:         "prune all projects",
+			projectName:  "",
+			all:          true,
+			keep:         2,
+			keepExplicit: true,
 			configData: `version: 1.0.0
 projects:
   - name: project-one
@@ -109,10 +113,11 @@ projects:
 			},
 		},
 		{
-			name:        "error when both --project and --all specified",
-			projectName: "test-project",
-			all:         true,
-			keep:        2,
+			name:         "error when both --project and --all specified",
+			projectName:  "test-project",
+			all:          true,
+			keep:         2,
+			keepExplicit: true,
 			configData: `version: 1.0.0
 projects:
   - name: test-project
@@ -124,10 +129,11 @@ projects:
 			errorMessage: "Cannot specify both",
 		},
 		{
-			name:        "error when neither --project nor --all specified",
-			projectName: "",
-			all:         false,
-			keep:        2,
+			name:         "error when neither --project nor --all specified",
+			projectName:  "",
+			all:          false,
+			keep:         2,
+			keepExplicit: true,
 			configData: `version: 1.0.0
 projects:
   - name: test-project
@@ -139,10 +145,11 @@ projects:
 			errorMessage: "Either --project or --all",
 		},
 		{
-			name:        "error when project not found",
-			projectName: "nonexistent",
-			all:         false,
-			keep:        2,
+			name:         "error when project not found",
+			projectName:  "nonexistent",
+			all:          false,
+			keep:         2,
+			keepExplicit: true,
 			configData: `version: 1.0.0
 projects:
   - name: test-project
@@ -154,10 +161,11 @@ projects:
 			errorMessage: "not found in configuration file",
 		},
 		{
-			name:        "skip when no retention policy",
-			projectName: "test-project",
-			all:         false,
-			keep:        0,
+			name:         "skip when no retention policy",
+			projectName:  "test-project",
+			all:          false,
+			keep:         0,
+			keepExplicit: false,
 			configData: `version: 1.0.0
 projects:
   - name: test-project
@@ -178,10 +186,11 @@ projects:
 			},
 		},
 		{
-			name:        "--keep overrides backup_retention",
-			projectName: "test-project",
-			all:         false,
-			keep:        5,
+			name:         "--keep overrides backup_retention",
+			projectName:  "test-project",
+			all:          false,
+			keep:         5,
+			keepExplicit: true,
 			configData: `version: 1.0.0
 projects:
   - name: test-project
@@ -201,6 +210,28 @@ projects:
 					t.Errorf("Expected 5 backups (--keep should override), got %d", len(metadata.Backups))
 				}
 			},
+		},
+		{
+			name:         "partial failure in --all mode",
+			projectName:  "",
+			all:          true,
+			keep:         2,
+			keepExplicit: true,
+			configData: `version: 1.0.0
+projects:
+  - name: project-with-backups
+    repo: git@github.com:user/one.git
+    branch: main
+  - name: project-no-backups
+    repo: git@github.com:user/two.git
+    branch: main
+`,
+			setupBackups: func(t *testing.T, homeDir string) {
+				// Only create backups for one project
+				createTestBackups(t, homeDir, "project-with-backups", 4)
+			},
+			expectError:  true,
+			errorMessage: "Failed to prune",
 		},
 	}
 
@@ -234,7 +265,7 @@ projects:
 			}()
 
 			// Run prune
-			err := runPrune()
+			err := runPrune(tt.keepExplicit)
 
 			if tt.expectError {
 				if err == nil {
@@ -283,7 +314,7 @@ projects:
 	}()
 
 	// Run prune - should fail because backup directory doesn't exist
-	err := runPrune()
+	err := runPrune(false)
 	if err == nil {
 		t.Errorf("Expected error for non-existent backup directory but got nil")
 	}
@@ -323,7 +354,7 @@ projects:
 	}()
 
 	// Run prune - should fail because metadata doesn't exist
-	err := runPrune()
+	err := runPrune(false)
 	if err == nil {
 		t.Errorf("Expected error for missing metadata but got nil")
 	}
@@ -359,12 +390,17 @@ projects:
 		pruneKeep = originalKeep
 	}()
 
-	// Run prune - should error because no pruning is needed
-	err := runPrune()
-	if err == nil {
-		t.Errorf("Expected error when backup count is already within limit")
-	} else if !strings.Contains(err.Error(), "already within retention limit") {
-		t.Errorf("Expected 'already within retention limit' error, got: %v", err)
+	// Run prune - should succeed with skip message
+	err := runPrune(false)
+	if err != nil {
+		t.Errorf("Expected no error when backup count is already within limit, got: %v", err)
+	}
+
+	// Verify backups were not modified
+	backupDir := filepath.Join(tempHome, ".config", "toske", "backups", "test-project")
+	metadata := readBackupMetadata(t, backupDir)
+	if len(metadata.Backups) != 3 {
+		t.Errorf("Expected 3 backups to remain unchanged, got %d", len(metadata.Backups))
 	}
 }
 
@@ -373,6 +409,7 @@ func TestDetermineRetention(t *testing.T) {
 		name              string
 		project           Project
 		keepFlag          int
+		keepExplicit      bool
 		expectedRetention int
 		expectedSkip      bool
 	}{
@@ -383,6 +420,7 @@ func TestDetermineRetention(t *testing.T) {
 				BackupRetention: 3,
 			},
 			keepFlag:          5,
+			keepExplicit:      true,
 			expectedRetention: 5,
 			expectedSkip:      false,
 		},
@@ -393,6 +431,7 @@ func TestDetermineRetention(t *testing.T) {
 				BackupRetention: 4,
 			},
 			keepFlag:          0,
+			keepExplicit:      false,
 			expectedRetention: 4,
 			expectedSkip:      false,
 		},
@@ -403,6 +442,7 @@ func TestDetermineRetention(t *testing.T) {
 				BackupRetention: 0,
 			},
 			keepFlag:          0,
+			keepExplicit:      false,
 			expectedRetention: 0,
 			expectedSkip:      true,
 		},
@@ -413,14 +453,26 @@ func TestDetermineRetention(t *testing.T) {
 				BackupRetention: 0,
 			},
 			keepFlag:          1,
+			keepExplicit:      true,
 			expectedRetention: 1,
+			expectedSkip:      false,
+		},
+		{
+			name: "--keep=0 explicitly set",
+			project: Project{
+				Name:            "test",
+				BackupRetention: 5,
+			},
+			keepFlag:          0,
+			keepExplicit:      true,
+			expectedRetention: 0,
 			expectedSkip:      false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			retention, skip, err := determineRetention(tt.project, tt.keepFlag)
+			retention, skip, err := determineRetention(tt.project, tt.keepFlag, tt.keepExplicit)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
@@ -519,7 +571,7 @@ projects:
 	}()
 
 	// Run prune
-	err = runPrune()
+	err = runPrune(true) // keepExplicit = true because we're testing --keep=2
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

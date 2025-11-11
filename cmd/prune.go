@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,6 +18,10 @@ var (
 	pruneKeep        int
 )
 
+// ja: errNoPruneNeeded は保持件数以内でprune不要な場合のセンチネルエラー
+// en: errNoPruneNeeded is a sentinel error when pruning is not needed (within retention limit)
+var errNoPruneNeeded = errors.New("prune: no prune needed")
+
 // ja: pruneCmd は prune コマンドを表します
 // en: pruneCmd represents the prune command
 var pruneCmd = &cobra.Command{
@@ -24,7 +29,8 @@ var pruneCmd = &cobra.Command{
 	Short: i18n.T("prune.short"),
 	Long:  i18n.T("prune.long"),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := runPrune(); err != nil {
+		keepExplicit := cmd.Flags().Changed("keep")
+		if err := runPrune(keepExplicit); err != nil {
 			fmt.Fprintf(os.Stderr, i18n.T("common.error")+"\n", err)
 			os.Exit(1)
 		}
@@ -38,7 +44,7 @@ func init() {
 	pruneCmd.Flags().IntVarP(&pruneKeep, "keep", "k", 0, i18n.T("prune.flag.keep"))
 }
 
-func runPrune() error {
+func runPrune(keepExplicit bool) error {
 	// ja: --project と --all の両方が指定されている場合はエラー
 	// en: Error if both --project and --all are specified
 	if pruneProjectName != "" && pruneAll {
@@ -113,7 +119,7 @@ func runPrune() error {
 			fmt.Printf(i18n.T("prune.processingProject")+"\n", project.Name)
 
 			backupDir := filepath.Join(homeDir, ".config", "toske", "backups", project.Name)
-			retention, skip, err := determineRetention(project, pruneKeep)
+			retention, skip, err := determineRetention(project, pruneKeep, keepExplicit)
 
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "  "+i18n.T("prune.error")+"\n", err)
@@ -130,8 +136,15 @@ func runPrune() error {
 			}
 
 			if err := pruneProjectBackups(backupDir, retention); err != nil {
-				fmt.Fprintf(os.Stderr, "  "+i18n.T("prune.error")+"\n", err)
-				errorCount++
+				if errors.Is(err, errNoPruneNeeded) {
+					// ja: 保持件数以内の場合はスキップとして扱う
+					// en: Treat as skipped when already within retention limit
+					fmt.Printf("  "+i18n.T("prune.noPruneNeeded")+"\n", len(project.BackupPaths), retention)
+					skippedCount++
+				} else {
+					fmt.Fprintf(os.Stderr, "  "+i18n.T("prune.error")+"\n", err)
+					errorCount++
+				}
 			} else {
 				fmt.Printf("  "+i18n.T("prune.pruned")+"\n", retention)
 				successCount++
@@ -144,6 +157,7 @@ func runPrune() error {
 		fmt.Printf(i18n.T("prune.summarySkipped")+"\n", skippedCount)
 		if errorCount > 0 {
 			fmt.Printf(i18n.T("prune.summaryError")+"\n", errorCount)
+			return fmt.Errorf(i18n.T("prune.partialFailure"), errorCount)
 		}
 	} else {
 		// ja: 指定されたプロジェクトを検索
@@ -161,7 +175,7 @@ func runPrune() error {
 		}
 
 		backupDir := filepath.Join(homeDir, ".config", "toske", "backups", project.Name)
-		retention, skip, err := determineRetention(*project, pruneKeep)
+		retention, skip, err := determineRetention(*project, pruneKeep, keepExplicit)
 
 		if err != nil {
 			return err
@@ -175,6 +189,22 @@ func runPrune() error {
 		fmt.Printf(i18n.T("prune.pruningProject")+"\n", project.Name, retention)
 
 		if err := pruneProjectBackups(backupDir, retention); err != nil {
+			if errors.Is(err, errNoPruneNeeded) {
+				// ja: 保持件数以内の場合は正常終了
+				// en: Return success when already within retention limit
+				fmt.Println()
+				// ja: メタデータを読み込んでバックアップ数を取得
+				// en: Load metadata to get backup count
+				metadataPath := filepath.Join(backupDir, "backups.yaml")
+				data, readErr := os.ReadFile(metadataPath)
+				if readErr == nil {
+					var metadata BackupMetadata
+					if unmarshalErr := yaml.Unmarshal(data, &metadata); unmarshalErr == nil {
+						fmt.Printf(i18n.T("prune.noPruneNeeded")+"\n", len(metadata.Backups), retention)
+					}
+				}
+				return nil
+			}
 			return err
 		}
 
@@ -188,10 +218,10 @@ func runPrune() error {
 // ja: determineRetention は保持件数を決定します
 // en: determineRetention determines the retention count
 // Returns (retention count, skip flag, error)
-func determineRetention(project Project, keepFlag int) (int, bool, error) {
-	// ja: --keep フラグが指定されている場合はそれを優先
-	// en: Prioritize --keep flag if specified
-	if keepFlag > 0 {
+func determineRetention(project Project, keepFlag int, keepExplicit bool) (int, bool, error) {
+	// ja: --keep フラグが明示的に指定されている場合はそれを優先（値が0でも）
+	// en: Prioritize --keep flag if explicitly specified (even if value is 0)
+	if keepExplicit {
 		return keepFlag, false, nil
 	}
 
@@ -244,7 +274,7 @@ func pruneProjectBackups(backupDir string, retention int) error {
 	// ja: 保持件数以下の場合は削除不要
 	// en: No need to delete if backup count is below retention
 	if len(metadata.Backups) <= retention {
-		return fmt.Errorf(i18n.T("prune.noPruneNeeded"), len(metadata.Backups), retention)
+		return errNoPruneNeeded
 	}
 
 	// ja: 削除対象のバックアップ数を計算

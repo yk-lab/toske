@@ -215,6 +215,7 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"prune.flag.project":       "Specify the project name to prune",
 		"prune.flag.all":           "Prune backups for all projects",
 		"prune.flag.keep":          "Number of backups to keep (overrides backup_retention in config)",
+		"prune.partialFailure":     "Failed to prune %d project(s)",
 
 		// Config
 		"config.legacyWarning":       "⚠️  WARNING: You are using a legacy configuration file location.",
@@ -435,6 +436,7 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"prune.flag.project":       "整理するプロジェクト名を指定",
 		"prune.flag.all":           "すべてのプロジェクトのバックアップを整理",
 		"prune.flag.keep":          "保持するバックアップ件数（設定ファイルの backup_retention より優先）",
+		"prune.partialFailure":     "%d プロジェクトの整理に失敗しました",
 
 		// Config
 		"config.legacyWarning":       "⚠️  警告: レガシーの設定ファイル位置を使用しています。",
