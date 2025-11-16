@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -281,6 +282,12 @@ func pruneProjectBackups(backupDir string, retention int) error {
 	if len(metadata.Backups) == 0 {
 		return fmt.Errorf("%s", i18n.T("prune.noBackups"))
 	}
+
+	// ja: タイムスタンプの降順（新しいものが先頭）にソートしてからpruneする
+	// en: Sort by timestamp in descending order (newest first) before pruning
+	sort.Slice(metadata.Backups, func(i, j int) bool {
+		return metadata.Backups[i].Timestamp.After(metadata.Backups[j].Timestamp)
+	})
 
 	// ja: 保持件数以下の場合は削除不要
 	// en: No need to delete if backup count is below retention
