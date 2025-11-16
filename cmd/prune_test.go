@@ -233,6 +233,42 @@ projects:
 			expectError:  true,
 			errorMessage: "Failed to prune",
 		},
+		{
+			name:         "--all mode with some projects already within limit",
+			projectName:  "",
+			all:          true,
+			keep:         5,
+			keepExplicit: true,
+			configData: `version: 1.0.0
+projects:
+  - name: project-needs-prune
+    repo: git@github.com:user/one.git
+    branch: main
+  - name: project-within-limit
+    repo: git@github.com:user/two.git
+    branch: main
+`,
+			setupBackups: func(t *testing.T, homeDir string) {
+				createTestBackups(t, homeDir, "project-needs-prune", 8)
+				createTestBackups(t, homeDir, "project-within-limit", 3)
+			},
+			expectError: false,
+			validateResult: func(t *testing.T, homeDir string) {
+				// Verify project-needs-prune has 5 backups
+				backupDir1 := filepath.Join(homeDir, ".config", "toske", "backups", "project-needs-prune")
+				metadata1 := readBackupMetadata(t, backupDir1)
+				if len(metadata1.Backups) != 5 {
+					t.Errorf("Expected 5 backups for project-needs-prune, got %d", len(metadata1.Backups))
+				}
+
+				// Verify project-within-limit still has 3 backups (unchanged)
+				backupDir2 := filepath.Join(homeDir, ".config", "toske", "backups", "project-within-limit")
+				metadata2 := readBackupMetadata(t, backupDir2)
+				if len(metadata2.Backups) != 3 {
+					t.Errorf("Expected 3 backups for project-within-limit (unchanged), got %d", len(metadata2.Backups))
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {

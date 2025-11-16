@@ -139,7 +139,18 @@ func runPrune(keepExplicit bool) error {
 				if errors.Is(err, errNoPruneNeeded) {
 					// ja: 保持件数以内の場合はスキップとして扱う
 					// en: Treat as skipped when already within retention limit
-					fmt.Printf("  "+i18n.T("prune.noPruneNeeded")+"\n", len(project.BackupPaths), retention)
+					// ja: メタデータを読み込んで実際のバックアップ数を取得
+					// en: Load metadata to get actual backup count
+					metadataPath := filepath.Join(backupDir, "backups.yaml")
+					data, readErr := os.ReadFile(metadataPath)
+					backupCount := 0
+					if readErr == nil {
+						var metadata BackupMetadata
+						if unmarshalErr := yaml.Unmarshal(data, &metadata); unmarshalErr == nil {
+							backupCount = len(metadata.Backups)
+						}
+					}
+					fmt.Printf("  "+i18n.T("prune.noPruneNeeded")+"\n", backupCount, retention)
 					skippedCount++
 				} else {
 					fmt.Fprintf(os.Stderr, "  "+i18n.T("prune.error")+"\n", err)
