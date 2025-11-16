@@ -508,10 +508,7 @@ func TestDetermineRetention(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			retention, skip, err := determineRetention(tt.project, tt.keepFlag, tt.keepExplicit)
-			if err != nil {
-				t.Fatalf("Unexpected error: %v", err)
-			}
+			retention, skip := determineRetention(tt.project, tt.keepFlag, tt.keepExplicit)
 
 			if retention != tt.expectedRetention {
 				t.Errorf("Expected retention %d, got %d", tt.expectedRetention, retention)

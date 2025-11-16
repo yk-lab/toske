@@ -23,6 +23,10 @@ var (
 // en: errNoPruneNeeded is a sentinel error when pruning is not needed (within retention limit)
 var errNoPruneNeeded = errors.New("prune: no prune needed")
 
+// ja: errNoBackups はバックアップが存在しない場合のセンチネルエラー
+// en: errNoBackups is a sentinel error when no backups exist
+var errNoBackups = errors.New("prune: no backups")
+
 // ja: pruneCmd は prune コマンドを表します
 // en: pruneCmd represents the prune command
 var pruneCmd = &cobra.Command{
@@ -103,7 +107,7 @@ func runPrune(keepExplicit bool) error {
 	// en: Get home directory
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return err
+		return fmt.Errorf(i18n.T("prune.homeDirError"), err)
 	}
 
 	if pruneAll {
@@ -120,14 +124,7 @@ func runPrune(keepExplicit bool) error {
 			fmt.Printf(i18n.T("prune.processingProject")+"\n", project.Name)
 
 			backupDir := filepath.Join(homeDir, ".config", "toske", "backups", project.Name)
-			retention, skip, err := determineRetention(project, pruneKeep, keepExplicit)
-
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "  "+i18n.T("prune.error")+"\n", err)
-				errorCount++
-				fmt.Println()
-				continue
-			}
+			retention, skip := determineRetention(project, pruneKeep, keepExplicit)
 
 			if skip {
 				fmt.Println("  " + i18n.T("prune.noRetentionSkip"))
@@ -140,18 +137,13 @@ func runPrune(keepExplicit bool) error {
 				if errors.Is(err, errNoPruneNeeded) {
 					// ja: 保持件数以内の場合はスキップとして扱う
 					// en: Treat as skipped when already within retention limit
-					// ja: メタデータを読み込んで実際のバックアップ数を取得
-					// en: Load metadata to get actual backup count
-					metadataPath := filepath.Join(backupDir, "backups.yaml")
-					data, readErr := os.ReadFile(metadataPath)
-					backupCount := 0
-					if readErr == nil {
-						var metadata BackupMetadata
-						if unmarshalErr := yaml.Unmarshal(data, &metadata); unmarshalErr == nil {
-							backupCount = len(metadata.Backups)
-						}
-					}
+					backupCount := loadBackupCount(backupDir)
 					fmt.Printf("  "+i18n.T("prune.noPruneNeeded")+"\n", backupCount, retention)
+					skippedCount++
+				} else if errors.Is(err, errNoBackups) {
+					// ja: バックアップがない場合もスキップとして扱う
+					// en: Treat as skipped when no backups exist
+					fmt.Println("  " + i18n.T("prune.noBackups"))
 					skippedCount++
 				} else {
 					fmt.Fprintf(os.Stderr, "  "+i18n.T("prune.error")+"\n", err)
@@ -187,11 +179,7 @@ func runPrune(keepExplicit bool) error {
 		}
 
 		backupDir := filepath.Join(homeDir, ".config", "toske", "backups", project.Name)
-		retention, skip, err := determineRetention(*project, pruneKeep, keepExplicit)
-
-		if err != nil {
-			return err
-		}
+		retention, skip := determineRetention(*project, pruneKeep, keepExplicit)
 
 		if skip {
 			fmt.Printf(i18n.T("prune.noRetentionWarning")+"\n", project.Name)
@@ -205,16 +193,14 @@ func runPrune(keepExplicit bool) error {
 				// ja: 保持件数以内の場合は正常終了
 				// en: Return success when already within retention limit
 				fmt.Println()
-				// ja: メタデータを読み込んでバックアップ数を取得
-				// en: Load metadata to get backup count
-				metadataPath := filepath.Join(backupDir, "backups.yaml")
-				data, readErr := os.ReadFile(metadataPath)
-				if readErr == nil {
-					var metadata BackupMetadata
-					if unmarshalErr := yaml.Unmarshal(data, &metadata); unmarshalErr == nil {
-						fmt.Printf(i18n.T("prune.noPruneNeeded")+"\n", len(metadata.Backups), retention)
-					}
-				}
+				backupCount := loadBackupCount(backupDir)
+				fmt.Printf(i18n.T("prune.noPruneNeeded")+"\n", backupCount, retention)
+				return nil
+			} else if errors.Is(err, errNoBackups) {
+				// ja: バックアップがない場合も正常終了
+				// en: Return success when no backups exist
+				fmt.Println()
+				fmt.Println(i18n.T("prune.noBackups"))
 				return nil
 			}
 			return err
@@ -227,25 +213,42 @@ func runPrune(keepExplicit bool) error {
 	return nil
 }
 
+// ja: loadBackupCount はバックアップディレクトリからバックアップ件数を取得します
+// en: loadBackupCount retrieves the backup count from the backup directory
+func loadBackupCount(backupDir string) int {
+	metadataPath := filepath.Join(backupDir, "backups.yaml")
+	data, err := os.ReadFile(metadataPath)
+	if err != nil {
+		return 0
+	}
+
+	var metadata BackupMetadata
+	if err := yaml.Unmarshal(data, &metadata); err != nil {
+		return 0
+	}
+
+	return len(metadata.Backups)
+}
+
 // ja: determineRetention は保持件数を決定します
 // en: determineRetention determines the retention count
-// Returns (retention count, skip flag, error)
-func determineRetention(project Project, keepFlag int, keepExplicit bool) (int, bool, error) {
+// Returns (retention count, skip flag)
+func determineRetention(project Project, keepFlag int, keepExplicit bool) (int, bool) {
 	// ja: --keep フラグが明示的に指定されている場合はそれを優先（値が0でも）
 	// en: Prioritize --keep flag if explicitly specified (even if value is 0)
 	if keepExplicit {
-		return keepFlag, false, nil
+		return keepFlag, false
 	}
 
 	// ja: backup_retention 設定を使用
 	// en: Use backup_retention setting
 	if project.BackupRetention > 0 {
-		return project.BackupRetention, false, nil
+		return project.BackupRetention, false
 	}
 
 	// ja: どちらも設定されていない場合はスキップ
 	// en: Skip if neither is set
-	return 0, true, nil
+	return 0, true
 }
 
 // ja: pruneProjectBackups はプロジェクトのバックアップをpruneします
@@ -277,10 +280,10 @@ func pruneProjectBackups(backupDir string, retention int) error {
 		return fmt.Errorf(i18n.T("prune.parseMetadataError"), err)
 	}
 
-	// ja: バックアップがない場合
-	// en: If no backups exist
+	// ja: バックアップがない場合はスキップ
+	// en: Skip if no backups exist
 	if len(metadata.Backups) == 0 {
-		return fmt.Errorf("%s", i18n.T("prune.noBackups"))
+		return errNoBackups
 	}
 
 	// ja: タイムスタンプの降順（新しいものが先頭）にソートしてからpruneする
