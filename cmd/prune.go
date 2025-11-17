@@ -256,16 +256,24 @@ func determineRetention(project Project, keepFlag int, keepExplicit bool) (int, 
 func pruneProjectBackups(backupDir string, retention int) error {
 	// ja: バックアップディレクトリが存在するかチェック
 	// en: Check if backup directory exists
-	if _, err := os.Stat(backupDir); os.IsNotExist(err) {
-		return fmt.Errorf("%s", i18n.T("prune.noBackupDir"))
+	if _, err := os.Stat(backupDir); err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("%s", i18n.T("prune.noBackupDir"))
+		}
+		// ja: ディレクトリは存在するが権限などでアクセスできない場合は、そのまま OS エラーを返す
+		// en: If directory exists but is inaccessible due to permissions, return the OS error
+		return err
 	}
 
 	metadataPath := filepath.Join(backupDir, "backups.yaml")
 
 	// ja: メタデータファイルが存在するかチェック
 	// en: Check if metadata file exists
-	if _, err := os.Stat(metadataPath); os.IsNotExist(err) {
-		return fmt.Errorf("%s", i18n.T("prune.noMetadata"))
+	if _, err := os.Stat(metadataPath); err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("%s", i18n.T("prune.noMetadata"))
+		}
+		return err
 	}
 
 	// ja: メタデータを読み込む

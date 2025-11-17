@@ -645,8 +645,8 @@ func createTestBackups(t *testing.T, homeDir, projectName string, count int) {
 
 	baseTime := time.Now()
 	for i := 0; i < count; i++ {
-		filename := "backup_" + time.Now().Format("20060102_150405.000000") + ".tar.gz"
 		timestamp := baseTime.Add(-time.Duration(i) * time.Hour)
+		filename := "backup_" + timestamp.Format("20060102_150405") + ".tar.gz"
 
 		// Create backup file
 		backupPath := filepath.Join(backupDir, filename)
@@ -660,9 +660,6 @@ func createTestBackups(t *testing.T, homeDir, projectName string, count int) {
 			Timestamp: timestamp,
 			Files:     []string{"test.txt"},
 		})
-
-		// Sleep briefly to ensure unique filenames
-		time.Sleep(1 * time.Millisecond)
 	}
 
 	// Write metadata file
