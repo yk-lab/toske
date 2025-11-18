@@ -277,6 +277,7 @@ projects:
   - name: sample-project
     repo: git@github.com:user/sample-project.git
     branch: main
+    repository_path: /tmp/sample-project
     backup_paths:
       - .env
       - db.sqlite3

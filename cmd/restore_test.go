@@ -31,6 +31,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_paths:
       - .env
     backup_retention: 3
@@ -52,6 +53,7 @@ projects:
   - name: multi-file-project
     repo: git@github.com:user/multi.git
     branch: main
+    repository_path: /tmp/multi-file-project
     backup_paths:
       - .env
       - db.sqlite3
@@ -75,6 +77,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_paths:
       - .env
 `,
@@ -102,6 +105,7 @@ projects:
   - name: no-backup-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/no-backup-project
     backup_paths:
       - .env
 `,
@@ -119,6 +123,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_paths:
       - .env
 `,
@@ -217,6 +222,7 @@ projects:
   - name: content-test
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/content-test
     backup_paths:
       - .env
       - config.json
@@ -295,6 +301,7 @@ projects:
   - name: multi-backup-test
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/multi-backup-test
     backup_paths:
       - .env
     backup_retention: 5

@@ -13,6 +13,7 @@ type Project struct {
 	Name            string   `mapstructure:"name" yaml:"name"`
 	Repo            string   `mapstructure:"repo" yaml:"repo"`
 	Branch          string   `mapstructure:"branch" yaml:"branch"`
+	RepositoryPath  string   `mapstructure:"repository_path" yaml:"repository_path"`
 	BackupPaths     []string `mapstructure:"backup_paths" yaml:"backup_paths,omitempty"`
 	BackupRetention int      `mapstructure:"backup_retention" yaml:"backup_retention,omitempty"`
 }

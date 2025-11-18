@@ -92,6 +92,7 @@ projects:
   - name: sample-project
     repo: git@github.com:user/sample-project.git
     branch: main
+    repository_path: /path/to/sample-project
     backup_paths:
       - .env
       - db.sqlite3
@@ -103,6 +104,7 @@ projects:
 #  - name: another-project
 #    repo: https://github.com/user/another-project.git
 #    branch: develop
+#    repository_path: /path/to/another-project
 #    backup_paths:
 #      - .env.local
 #      - data/

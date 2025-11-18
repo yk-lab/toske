@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -76,15 +77,52 @@ func runDelete() error {
 		return fmt.Errorf(i18n.T("delete.projectNotFound"), deleteProjectName)
 	}
 
+	project := config.Projects[projectIndex]
+
+	// ja: バックアップ存在確認
+	// en: Check if backups exist
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %w", err)
+	}
+
+	backupDir := filepath.Join(homeDir, ".config", "toske", "backups", project.Name)
+	if !hasBackups(backupDir) {
+		return fmt.Errorf(i18n.T("delete.noBackup"), project.Name, project.Name)
+	}
+
+	// ja: repository_path 確認
+	// en: Check repository_path
+	if project.RepositoryPath == "" {
+		return fmt.Errorf(i18n.T("delete.noRepositoryPath"), project.Name)
+	}
+
+	// ja: リポジトリディレクトリ存在確認
+	// en: Check if repository directory exists
+	repoExists := false
+	if stat, err := os.Stat(project.RepositoryPath); err == nil && stat.IsDir() {
+		repoExists = true
+	}
+
 	// ja: 削除確認
 	// en: Confirm deletion
-	confirmed, err := confirmDeletion(deleteProjectName, deleteForce)
+	confirmed, err := confirmDeletion(project, repoExists, deleteForce)
 	if err != nil {
 		return err
 	}
 	if !confirmed {
 		fmt.Println(i18n.T("delete.cancelled"))
 		return nil
+	}
+
+	// ja: リポジトリディレクトリ物理削除
+	// en: Physically delete repository directory
+	if repoExists {
+		fmt.Printf(i18n.T("delete.removingRepository")+"\n", project.RepositoryPath)
+		if err := os.RemoveAll(project.RepositoryPath); err != nil {
+			return fmt.Errorf(i18n.T("delete.removeRepoError"), err)
+		}
+		fmt.Println(i18n.T("delete.repositoryRemoved"))
 	}
 
 	// ja: プロジェクトを削除
@@ -133,7 +171,7 @@ func findProjectIndex(projects []Project, name string) int {
 
 // ja: confirmDeletion は削除の確認を行います
 // en: confirmDeletion confirms the deletion
-func confirmDeletion(projectName string, force bool) (bool, error) {
+func confirmDeletion(project Project, repoExists bool, force bool) (bool, error) {
 	// ja: --force フラグが指定されている場合は確認をスキップ
 	// en: Skip confirmation if --force flag is specified
 	if force {
@@ -142,7 +180,17 @@ func confirmDeletion(projectName string, force bool) (bool, error) {
 
 	// ja: 削除確認プロンプトを表示
 	// en: Show confirmation prompt
-	fmt.Printf(i18n.T("delete.confirmPrompt"), projectName)
+	fmt.Println(i18n.T("delete.confirmHeader"))
+	fmt.Printf("  "+i18n.T("delete.confirmProject")+"\n", project.Name)
+
+	if repoExists {
+		fmt.Printf("  "+i18n.T("delete.confirmRepoPath")+"\n", project.RepositoryPath)
+	} else {
+		fmt.Printf("  "+i18n.T("delete.confirmNoRepo")+"\n", project.RepositoryPath)
+	}
+
+	fmt.Println()
+	fmt.Print(i18n.T("delete.confirmPrompt"))
 
 	reader := bufio.NewReader(os.Stdin)
 	response, err := reader.ReadString('\n')
@@ -172,4 +220,25 @@ func saveConfig(configPath string, config *Config) error {
 	}
 
 	return nil
+}
+
+// ja: hasBackups はプロジェクトにバックアップが存在するかチェックします
+// en: hasBackups checks if backups exist for the project
+func hasBackups(backupDir string) bool {
+	metadataPath := filepath.Join(backupDir, "backups.yaml")
+	if _, err := os.Stat(metadataPath); os.IsNotExist(err) {
+		return false
+	}
+
+	data, err := os.ReadFile(metadataPath)
+	if err != nil {
+		return false
+	}
+
+	var metadata BackupMetadata
+	if err := yaml.Unmarshal(data, &metadata); err != nil {
+		return false
+	}
+
+	return len(metadata.Backups) > 0
 }
