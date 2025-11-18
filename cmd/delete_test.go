@@ -40,7 +40,7 @@ projects:
 `,
 			userInput:       "y\n",
 			expectError:     false,
-			expectedRemains: []string{"other-project"},
+			expectedRemains: []string{"test-project", "other-project"},
 		},
 		{
 			name:        "successful deletion with yes (full word) confirmation",
@@ -58,7 +58,7 @@ projects:
 `,
 			userInput:       "yes\n",
 			expectError:     false,
-			expectedRemains: []string{"another-project"},
+			expectedRemains: []string{"test-project", "another-project"},
 		},
 		{
 			name:        "cancelled deletion with no",
@@ -122,7 +122,7 @@ projects:
 `,
 			userInput:       "y\n",
 			expectError:     false,
-			expectedRemains: []string{},
+			expectedRemains: []string{"test-project"},
 		},
 	}
 
@@ -348,19 +348,12 @@ projects:
 				t.Fatalf("Failed to unmarshal config: %v", err)
 			}
 
-			projectExists := false
-			for _, project := range config.Projects {
-				if project.Name == "test-project" {
-					projectExists = true
-					break
-				}
+			// Projects always remain in config (delete only removes repository, not config)
+			if len(config.Projects) != 1 {
+				t.Errorf("Expected 1 project in config, got %d", len(config.Projects))
 			}
-
-			if tt.shouldDelete && projectExists {
-				t.Errorf("Expected project to be deleted, but it still exists")
-			}
-			if !tt.shouldDelete && !projectExists {
-				t.Errorf("Expected project to remain, but it was deleted")
+			if len(config.Projects) > 0 && config.Projects[0].Name != "test-project" {
+				t.Errorf("Expected 'test-project' in config, got '%s'", config.Projects[0].Name)
 			}
 		})
 	}
@@ -423,8 +416,11 @@ projects:
 		t.Fatalf("Failed to unmarshal config: %v", err)
 	}
 
-	if len(config.Projects) != 0 {
-		t.Errorf("Expected project to be deleted despite whitespace in flag, but found %d projects", len(config.Projects))
+	if len(config.Projects) != 1 {
+		t.Errorf("Expected project to remain in config after deletion, but found %d projects", len(config.Projects))
+	}
+	if config.Projects[0].Name != "test-project" {
+		t.Errorf("Expected 'test-project' to remain in config, got '%s'", config.Projects[0].Name)
 	}
 }
 
@@ -520,14 +516,20 @@ projects:
 		t.Fatalf("Failed to unmarshal config: %v", err)
 	}
 
-	// Verify project-two still has its backup paths and retention
-	if len(config.Projects) != 1 {
-		t.Fatalf("Expected 1 project, got %d", len(config.Projects))
+	// Verify both projects remain in config (delete only removes repository, not config)
+	if len(config.Projects) != 2 {
+		t.Fatalf("Expected 2 projects in config, got %d", len(config.Projects))
 	}
 
-	project := config.Projects[0]
+	// Verify project-one is still in config
+	if config.Projects[0].Name != "project-one" {
+		t.Errorf("Expected project-one at position 0, got %s", config.Projects[0].Name)
+	}
+
+	// Verify project-two still has its backup paths and retention
+	project := config.Projects[1]
 	if project.Name != "project-two" {
-		t.Errorf("Expected project-two, got %s", project.Name)
+		t.Errorf("Expected project-two at position 1, got %s", project.Name)
 	}
 	if len(project.BackupPaths) != 1 {
 		t.Errorf("Expected 1 backup path, got %d - YAML field names may be corrupted", len(project.BackupPaths))
@@ -582,11 +584,16 @@ projects:
 		t.Fatalf("Failed to unmarshal config: %v", err)
 	}
 
-	if len(config.Projects) != 1 {
-		t.Errorf("Expected 1 remaining project, got %d", len(config.Projects))
+	if len(config.Projects) != 2 {
+		t.Errorf("Expected 2 projects to remain in config, got %d", len(config.Projects))
 	}
-	if len(config.Projects) > 0 && config.Projects[0].Name != "other-project" {
-		t.Errorf("Expected 'other-project' to remain, got '%s'", config.Projects[0].Name)
+	if len(config.Projects) >= 2 {
+		if config.Projects[0].Name != "test-project" {
+			t.Errorf("Expected 'test-project' at position 0, got '%s'", config.Projects[0].Name)
+		}
+		if config.Projects[1].Name != "other-project" {
+			t.Errorf("Expected 'other-project' at position 1, got '%s'", config.Projects[1].Name)
+		}
 	}
 }
 
@@ -841,7 +848,8 @@ projects:
 		t.Fatalf("Failed to unmarshal config: %v", err)
 	}
 
-	expectedProjects := []string{"first-project", "third-project", "fourth-project"}
+	// All projects should remain in config (delete only removes repository, not config)
+	expectedProjects := []string{"first-project", "second-project", "third-project", "fourth-project"}
 	if len(config.Projects) != len(expectedProjects) {
 		t.Fatalf("Expected %d projects, got %d", len(expectedProjects), len(config.Projects))
 	}

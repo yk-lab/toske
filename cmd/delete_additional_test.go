@@ -105,7 +105,7 @@ projects:
 		t.Errorf("Expected deletion to succeed even with missing repository directory, got error: %v", err)
 	}
 
-	// Verify project was deleted from config
+	// Verify project remains in config (delete only removes repository, not config)
 	v := viper.New()
 	v.SetConfigFile(cfgFile)
 	if err := v.ReadInConfig(); err != nil {
@@ -117,8 +117,11 @@ projects:
 		t.Fatalf("Failed to unmarshal config: %v", err)
 	}
 
-	if len(config.Projects) != 0 {
-		t.Errorf("Expected project to be deleted from config, but found %d projects", len(config.Projects))
+	if len(config.Projects) != 1 {
+		t.Errorf("Expected project to remain in config, but found %d projects", len(config.Projects))
+	}
+	if config.Projects[0].Name != "test-project" {
+		t.Errorf("Expected 'test-project' to remain in config, got '%s'", config.Projects[0].Name)
 	}
 }
 
@@ -165,7 +168,7 @@ projects:
 		t.Error("Repository directory should have been deleted")
 	}
 
-	// Verify project was deleted from config
+	// Verify project remains in config (delete only removes repository, not config)
 	v := viper.New()
 	v.SetConfigFile(cfgFile)
 	if err := v.ReadInConfig(); err != nil {
@@ -177,7 +180,10 @@ projects:
 		t.Fatalf("Failed to unmarshal config: %v", err)
 	}
 
-	if len(config.Projects) != 0 {
-		t.Errorf("Expected project to be deleted from config, but found %d projects", len(config.Projects))
+	if len(config.Projects) != 1 {
+		t.Errorf("Expected project to remain in config, but found %d projects", len(config.Projects))
+	}
+	if config.Projects[0].Name != "test-project" {
+		t.Errorf("Expected 'test-project' to remain in config, got '%s'", config.Projects[0].Name)
 	}
 }

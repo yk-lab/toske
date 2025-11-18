@@ -125,16 +125,8 @@ func runDelete() error {
 		fmt.Println(i18n.T("delete.repositoryRemoved"))
 	}
 
-	// ja: プロジェクトを削除
-	// en: Delete the project
-	config.Projects = append(config.Projects[:projectIndex], config.Projects[projectIndex+1:]...)
-
-	// ja: 設定ファイルを保存
-	// en: Save configuration file
-	if err := saveConfig(configPath, &config); err != nil {
-		return err
-	}
-
+	// ja: 設定は保持する（restore コマンドで復元できるようにするため）
+	// en: Keep configuration (to allow restore command to work)
 	fmt.Printf(i18n.T("delete.success")+"\n", deleteProjectName)
 
 	return nil

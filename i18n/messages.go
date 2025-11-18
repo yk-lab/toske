@@ -146,8 +146,8 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"restore.fileChmodWarning":         "  ⚠ Warning: Failed to set permissions for %s: %v",
 
 		// Delete command
-		"delete.short":              "Delete a project from configuration",
-		"delete.long":               "Remove a project from the configuration file and physically delete the repository directory. This requires that backups exist for the project.",
+		"delete.short":              "Delete local repository directory",
+		"delete.long":               "Physically delete the local repository directory while keeping the configuration. This requires that backups exist for the project. Use 'restore' command to recover files from backup.",
 		"delete.noConfig":           "Configuration file does not exist: %s\nRun 'toske init' to create one.",
 		"delete.readError":          "Failed to read configuration file: %v",
 		"delete.parseError":         "Failed to parse configuration file: %v",
@@ -167,7 +167,7 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"delete.readInputError":     "Failed to read input: %v",
 		"delete.marshalError":       "Failed to marshal configuration: %v",
 		"delete.writeError":         "Failed to write configuration file: %v",
-		"delete.success":            "✓ Project '%s' has been successfully deleted from configuration.",
+		"delete.success":            "✓ Repository directory deleted successfully for project '%s'. Configuration retained for restore.",
 		"delete.flag.project":       "Specify the project name to delete",
 		"delete.flag.force":         "Skip confirmation prompt (use with caution)",
 
@@ -377,8 +377,8 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"restore.fileChmodWarning":         "  ⚠ 警告: ファイル %s のパーミッション設定に失敗しました: %v",
 
 		// Delete command
-		"delete.short":              "設定からプロジェクトを削除",
-		"delete.long":               "設定ファイルからプロジェクトを削除し、リポジトリディレクトリを物理削除します。プロジェクトのバックアップが存在することが必要です。",
+		"delete.short":              "ローカルリポジトリディレクトリを削除",
+		"delete.long":               "設定を保持したまま、ローカルリポジトリディレクトリを物理削除します。プロジェクトのバックアップが存在することが必要です。restore コマンドでバックアップから復元できます。",
 		"delete.noConfig":           "設定ファイルが存在しません: %s\n'toske init' を実行して作成してください。",
 		"delete.readError":          "設定ファイルの読み込みに失敗しました: %v",
 		"delete.parseError":         "設定ファイルのパースに失敗しました: %v",
@@ -398,7 +398,7 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"delete.readInputError":     "入力の読み取りに失敗しました: %v",
 		"delete.marshalError":       "設定のマーシャルに失敗しました: %v",
 		"delete.writeError":         "設定ファイルの書き込みに失敗しました: %v",
-		"delete.success":            "✓ プロジェクト '%s' を設定から正常に削除しました。",
+		"delete.success":            "✓ プロジェクト '%s' のリポジトリディレクトリを削除しました。設定は保持されています（restore で復元可能）。",
 		"delete.flag.project":       "削除するプロジェクト名を指定",
 		"delete.flag.force":         "確認プロンプトをスキップ（注意して使用してください）",
 
