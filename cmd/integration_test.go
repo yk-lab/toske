@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -63,7 +64,11 @@ projects:
 	if err != nil {
 		t.Fatalf("Failed to get working directory: %v", err)
 	}
-	defer os.Chdir(originalWd)
+	defer func() {
+		if err := os.Chdir(originalWd); err != nil {
+			t.Fatalf("chdir back to %s: %v", originalWd, err)
+		}
+	}()
 
 	if err := os.Chdir(repoPath); err != nil {
 		t.Fatalf("Failed to change to repository directory: %v", err)
@@ -309,14 +314,18 @@ projects:
 	if err != nil {
 		t.Fatalf("Failed to get working directory: %v", err)
 	}
-	defer os.Chdir(originalWd)
+	defer func() {
+		if err := os.Chdir(originalWd); err != nil {
+			t.Fatalf("chdir back to %s: %v", originalWd, err)
+		}
+	}()
 
 	// Perform multiple cycles
 	for cycle := 1; cycle <= 3; cycle++ {
 		t.Logf("Cycle %d: backup → delete → restore", cycle)
 
 		// Update file content for this cycle
-		cycleContent := "CYCLE=" + string(rune('0'+cycle))
+		cycleContent := fmt.Sprintf("CYCLE=%d", cycle)
 		if err := os.WriteFile(testFile, []byte(cycleContent), 0644); err != nil {
 			t.Fatalf("Cycle %d: Failed to update test file: %v", cycle, err)
 		}
@@ -333,7 +342,9 @@ projects:
 		}
 		projectName = originalProjectName
 
-		os.Chdir(originalWd)
+		if err := os.Chdir(originalWd); err != nil {
+			t.Fatalf("Cycle %d: chdir back to %s: %v", cycle, originalWd, err)
+		}
 
 		// Delete
 		originalDeleteProjectName := deleteProjectName
@@ -371,7 +382,9 @@ projects:
 		restoreProjectName = originalRestoreProjectName
 		forceRestore = originalForceRestore
 
-		os.Chdir(originalWd)
+		if err := os.Chdir(originalWd); err != nil {
+			t.Fatalf("Cycle %d: chdir back to %s: %v", cycle, originalWd, err)
+		}
 
 		// Verify restoration
 		content, err := os.ReadFile(testFile)
