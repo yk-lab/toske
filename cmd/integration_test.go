@@ -91,7 +91,11 @@ projects:
 		t.Fatalf("Failed to get home directory: %v", err)
 	}
 	backupDir := filepath.Join(homeDir, ".config", "toske", "backups", "test-project")
-	defer os.RemoveAll(backupDir) // Cleanup backups after test
+	defer func() {
+		if err := os.RemoveAll(backupDir); err != nil {
+			t.Errorf("failed to remove backupDir %s: %v", backupDir, err)
+		}
+	}()
 
 	if _, err := os.Stat(backupDir); os.IsNotExist(err) {
 		t.Fatal("Backup directory was not created")
@@ -307,7 +311,11 @@ projects:
 		t.Fatalf("Failed to get home directory: %v", err)
 	}
 	backupDir := filepath.Join(homeDir, ".config", "toske", "backups", "test-project")
-	defer os.RemoveAll(backupDir)
+	defer func() {
+		if err := os.RemoveAll(backupDir); err != nil {
+			t.Fatalf("failed to remove backupDir %s: %v", backupDir, err)
+		}
+	}()
 
 	// Save original working directory
 	originalWd, err := os.Getwd()
