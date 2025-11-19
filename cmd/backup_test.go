@@ -10,10 +10,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/yk-lab/toske/i18n"
 	"gopkg.in/yaml.v3"
 )
 
 func TestRunBackup(t *testing.T) {
+	// ja: テスト用に英語に設定
+	// en: Set language to English for testing
+	i18n.SetLanguage("en")
 	tests := []struct {
 		name         string
 		projectName  string

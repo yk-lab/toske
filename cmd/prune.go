@@ -182,8 +182,7 @@ func runPrune(keepExplicit bool) error {
 		retention, skip := determineRetention(*project, pruneKeep, keepExplicit)
 
 		if skip {
-			fmt.Printf(i18n.T("prune.noRetentionWarning")+"\n", project.Name)
-			return nil
+			return fmt.Errorf(i18n.T("prune.noRetentionError"), project.Name)
 		}
 
 		fmt.Printf(i18n.T("prune.pruningProject")+"\n", project.Name, retention)

@@ -108,6 +108,7 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"backup.success":                  "✓ Backup completed successfully!",
 		"backup.backupLocation":           "  Backup location: %s",
 		"backup.flag.project":             "Specify the project name to backup",
+		"backup.noFilesBackedUp":          "No files were backed up. All specified files may not exist or are empty.",
 
 		// Restore command
 		"restore.short":                    "Restore project files from backup",
@@ -144,6 +145,10 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"restore.fileCreateWarning":        "  ⚠ Warning: Failed to create file %s: %v",
 		"restore.fileCopyWarning":          "  ⚠ Warning: Failed to copy file %s: %v",
 		"restore.fileChmodWarning":         "  ⚠ Warning: Failed to set permissions for %s: %v",
+		"restore.noRepositoryPath":         "Project '%s' does not have repository_path configured.",
+		"restore.cloningRepo":              "Cloning repository: %s (branch: %s)",
+		"restore.cloneError":               "Failed to clone repository: %v",
+		"restore.repositoryExists":         "Repository already exists at: %s",
 
 		// Delete command
 		"delete.short":              "Delete local repository directory",
@@ -210,6 +215,7 @@ You can override the default path by setting the TOSKE_CONFIG environment variab
 		"prune.marshalError":       "Failed to marshal metadata: %v",
 		"prune.writeError":         "Failed to write metadata file: %v",
 		"prune.noRetentionWarning": "⚠️  Warning: Project '%s' has no backup_retention configured and --keep was not specified.\nSkipping prune operation. Use --keep flag to specify retention count.",
+		"prune.noRetentionError":   "Project '%s' has no backup_retention configured and --keep was not specified. Please set backup_retention in config or use --keep flag.",
 		"prune.noRetentionSkip":    "No retention policy configured, skipping",
 		"prune.pruningAll":         "Pruning backups for all projects...",
 		"prune.pruningProject":     "Pruning backups for project: %s (keeping %d)",
@@ -339,6 +345,7 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"backup.success":                  "✓ バックアップが正常に完了しました！",
 		"backup.backupLocation":           "  バックアップの場所: %s",
 		"backup.flag.project":             "バックアップするプロジェクト名を指定",
+		"backup.noFilesBackedUp":          "ファイルがバックアップされませんでした。指定されたファイルがすべて存在しないか、空の可能性があります。",
 
 		// Restore command
 		"restore.short":                    "バックアップからプロジェクトファイルを復元",
@@ -375,6 +382,10 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"restore.fileCreateWarning":        "  ⚠ 警告: ファイル %s の作成に失敗しました: %v",
 		"restore.fileCopyWarning":          "  ⚠ 警告: ファイル %s のコピーに失敗しました: %v",
 		"restore.fileChmodWarning":         "  ⚠ 警告: ファイル %s のパーミッション設定に失敗しました: %v",
+		"restore.noRepositoryPath":         "プロジェクト '%s' に repository_path が設定されていません。",
+		"restore.cloningRepo":              "リポジトリをクローンしています: %s (ブランチ: %s)",
+		"restore.cloneError":               "リポジトリのクローンに失敗しました: %v",
+		"restore.repositoryExists":         "リポジトリは既に存在します: %s",
 
 		// Delete command
 		"delete.short":              "ローカルリポジトリディレクトリを削除",
@@ -441,6 +452,7 @@ TOSKE_CONFIG 環境変数を設定することで、デフォルトパスを上�
 		"prune.marshalError":       "メタデータのマーシャルに失敗しました: %v",
 		"prune.writeError":         "メタデータファイルの書き込みに失敗しました: %v",
 		"prune.noRetentionWarning": "⚠️  警告: プロジェクト '%s' には backup_retention が設定されておらず、--keep も指定されていません。\nprune 操作をスキップします。--keep フラグで保持件数を指定してください。",
+		"prune.noRetentionError":   "プロジェクト '%s' には backup_retention が設定されておらず、--keep も指定されていません。config で backup_retention を設定するか、--keep フラグを使用してください。",
 		"prune.noRetentionSkip":    "保持ポリシーが設定されていないため、スキップします",
 		"prune.pruningAll":         "すべてのプロジェクトのバックアップを整理しています...",
 		"prune.pruningProject":     "プロジェクトのバックアップを整理しています: %s (%d 件保持)",

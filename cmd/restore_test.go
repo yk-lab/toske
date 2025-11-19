@@ -161,6 +161,25 @@ projects:
 				t.Fatalf("Failed to setup test backup: %v", err)
 			}
 
+			// ja: repository_path に .git ディレクトリを作成してGit clone をスキップ
+			// en: Create .git directory in repository_path to skip Git clone
+			if !tt.expectError || tt.errorMessage == "" {
+				// ja: Config から repository_path を取得
+				// en: Get repository_path from config
+				var config Config
+				if err := yaml.Unmarshal([]byte(tt.configData), &config); err == nil {
+					for _, p := range config.Projects {
+						if p.Name == tt.projectName && p.RepositoryPath != "" {
+							gitDir := filepath.Join(p.RepositoryPath, ".git")
+							if err := os.MkdirAll(gitDir, 0755); err != nil {
+								t.Fatalf("Failed to create .git directory: %v", err)
+							}
+							break
+						}
+					}
+				}
+			}
+
 			// Change to work directory
 			originalWd, err := os.Getwd()
 			if err != nil {
@@ -239,6 +258,13 @@ projects:
 		t.Fatalf("Failed to create test backup: %v", err)
 	}
 
+	// ja: repository_path に .git ディレクトリを作成してGit clone をスキップ
+	// en: Create .git directory in repository_path to skip Git clone
+	gitDir := filepath.Join("/tmp/content-test", ".git")
+	if err := os.MkdirAll(gitDir, 0755); err != nil {
+		t.Fatalf("Failed to create .git directory: %v", err)
+	}
+
 	// Change to work directory
 	originalWd, err := os.Getwd()
 	if err != nil {
@@ -269,8 +295,11 @@ projects:
 	}
 
 	// Verify restored file contents
+	// ja: ファイルは repository_path に復元される
+	// en: Files are restored to repository_path
+	repoPath := "/tmp/content-test"
 	for _, tf := range testFiles {
-		data, err := os.ReadFile(filepath.Join(workDir, tf.name))
+		data, err := os.ReadFile(filepath.Join(repoPath, tf.name))
 		if err != nil {
 			t.Errorf("Failed to read restored file %s: %v", tf.name, err)
 			continue
@@ -329,6 +358,13 @@ projects:
 		}
 	}
 
+	// ja: repository_path に .git ディレクトリを作成してGit clone をスキップ
+	// en: Create .git directory in repository_path to skip Git clone
+	gitDir := filepath.Join("/tmp/multi-backup-test", ".git")
+	if err := os.MkdirAll(gitDir, 0755); err != nil {
+		t.Fatalf("Failed to create .git directory: %v", err)
+	}
+
 	// Change to work directory
 	originalWd, err := os.Getwd()
 	if err != nil {
@@ -358,7 +394,10 @@ projects:
 			t.Fatalf("Restore failed: %v", err)
 		}
 
-		data, err := os.ReadFile(filepath.Join(workDir, ".env"))
+		// ja: ファイルは repository_path に復元される
+		// en: Files are restored to repository_path
+		repoPath := "/tmp/multi-backup-test"
+		data, err := os.ReadFile(filepath.Join(repoPath, ".env"))
 		if err != nil {
 			t.Fatalf("Failed to read restored file: %v", err)
 		}
@@ -387,7 +426,10 @@ projects:
 			t.Fatalf("Restore failed: %v", err)
 		}
 
-		data, err := os.ReadFile(filepath.Join(workDir, ".env"))
+		// ja: ファイルは repository_path に復元される
+		// en: Files are restored to repository_path
+		repoPath := "/tmp/multi-backup-test"
+		data, err := os.ReadFile(filepath.Join(repoPath, ".env"))
 		if err != nil {
 			t.Fatalf("Failed to read restored file: %v", err)
 		}
@@ -430,7 +472,7 @@ func TestExtractBackupArchive(t *testing.T) {
 	}
 
 	// Extract archive
-	fileCount, err := extractBackupArchive(archivePath)
+	fileCount, err := extractBackupArchive(archivePath, workDir)
 	if err != nil {
 		t.Fatalf("Failed to extract archive: %v", err)
 	}
@@ -523,7 +565,7 @@ func TestExtractBackupArchivePathTraversal(t *testing.T) {
 	}
 
 	// Extract archive - should skip all malicious files
-	fileCount, err := extractBackupArchive(archivePath)
+	fileCount, err := extractBackupArchive(archivePath, workDir)
 	if err != nil {
 		t.Fatalf("Failed to extract archive: %v", err)
 	}
@@ -622,7 +664,7 @@ func TestExtractBackupArchiveSymlinkAttack(t *testing.T) {
 	}
 
 	// Extract archive - should skip the file due to symlink
-	fileCount, err := extractBackupArchive(archivePath)
+	fileCount, err := extractBackupArchive(archivePath, workDir)
 	if err != nil {
 		t.Fatalf("Failed to extract archive: %v", err)
 	}

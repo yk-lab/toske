@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -93,6 +94,12 @@ func runRestore() error {
 		return fmt.Errorf(i18n.T("restore.projectNotFound"), restoreProjectName)
 	}
 
+	// ja: repository_path がない場合はエラー
+	// en: Error if repository_path is not set
+	if project.RepositoryPath == "" {
+		return fmt.Errorf(i18n.T("restore.noRepositoryPath"), project.Name)
+	}
+
 	// ja: バックアップディレクトリを取得
 	// en: Get backup directory
 	homeDir, err := os.UserHomeDir()
@@ -171,11 +178,54 @@ func runRestore() error {
 		}
 	}
 
+	// ja: リポジトリをクローン
+	// en: Clone repository
+	repoPath := project.RepositoryPath
+	gitDir := filepath.Join(repoPath, ".git")
+
+	// ja: リポジトリが既に存在するかチェック
+	// en: Check if repository already exists
+	if _, err := os.Stat(gitDir); err == nil {
+		// ja: .git ディレクトリが既に存在する場合は警告を表示
+		// en: Show warning if .git directory already exists
+		fmt.Printf(i18n.T("restore.repositoryExists")+"\n", repoPath)
+	} else if os.IsNotExist(err) {
+		// ja: .git ディレクトリが存在しない場合、クローンを実行
+		// en: Clone if .git directory doesn't exist
+		// ja: リポジトリディレクトリがある場合は削除
+		// en: Remove repository directory if it exists
+		if _, err := os.Stat(repoPath); err == nil {
+			if err := os.RemoveAll(repoPath); err != nil {
+				return fmt.Errorf(i18n.T("restore.cloneError"), err)
+			}
+		}
+
+		fmt.Printf(i18n.T("restore.cloningRepo")+"\n", project.Repo, project.Branch)
+
+		// ja: 親ディレクトリを作成
+		// en: Create parent directory
+		parentDir := filepath.Dir(repoPath)
+		if err := os.MkdirAll(parentDir, 0755); err != nil {
+			return fmt.Errorf(i18n.T("restore.cloneError"), err)
+		}
+
+		// ja: git clone を実行
+		// en: Execute git clone
+		cmd := exec.Command("git", "clone", "-b", project.Branch, project.Repo, repoPath)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf(i18n.T("restore.cloneError"), err)
+		}
+	} else {
+		return fmt.Errorf(i18n.T("restore.cloneError"), err)
+	}
+
 	// ja: ファイルを復元
 	// en: Restore files
 	fmt.Println(i18n.T("restore.restoringFiles"))
 
-	fileCount, err := extractBackupArchive(archivePath)
+	fileCount, err := extractBackupArchive(archivePath, repoPath)
 	if err != nil {
 		return fmt.Errorf(i18n.T("restore.extractError"), err)
 	}
@@ -189,7 +239,7 @@ func runRestore() error {
 
 // ja: extractBackupArchive はバックアップアーカイブを展開します
 // en: extractBackupArchive extracts a backup archive
-func extractBackupArchive(archivePath string) (int, error) {
+func extractBackupArchive(archivePath string, targetDir string) (int, error) {
 	// ja: アーカイブファイルを開く
 	// en: Open archive file
 	archiveFile, err := os.Open(archivePath)
@@ -210,9 +260,9 @@ func extractBackupArchive(archivePath string) (int, error) {
 	// en: Create tar reader
 	tarReader := tar.NewReader(gzipReader)
 
-	// ja: カレントディレクトリを取得
-	// en: Get current directory
-	currentDir, err := os.Getwd()
+	// ja: 絶対パスに変換
+	// en: Convert to absolute path
+	targetDir, err = filepath.Abs(targetDir)
 	if err != nil {
 		return 0, err
 	}
@@ -244,28 +294,28 @@ func extractBackupArchive(archivePath string) (int, error) {
 
 		// ja: ファイルパスを決定
 		// en: Determine file path
-		targetPath := filepath.Join(currentDir, header.Name)
+		targetPath := filepath.Join(targetDir, header.Name)
 
 		// ja: 相対パスでの追加セキュリティチェック
 		// en: Additional security check with relative path
-		relPath, err := filepath.Rel(currentDir, targetPath)
+		relPath, err := filepath.Rel(targetDir, targetPath)
 		if err != nil || strings.HasPrefix(relPath, "..") {
 			continue
 		}
 
 		fmt.Printf(i18n.T("restore.extractingFile")+"\n", header.Name)
 
-		targetDir := filepath.Dir(targetPath)
+		fileDir := filepath.Dir(targetPath)
 
 		// ja: シンボリックリンク攻撃を防ぐため、ディレクトリパスを事前に検証
 		// en: Validate directory path before creation to prevent symlink attacks
-		if err := validatePathNoSymlinks(currentDir, targetDir); err != nil {
+		if err := validatePathNoSymlinks(targetDir, fileDir); err != nil {
 			continue
 		}
 
 		// ja: ディレクトリを作成
 		// en: Create directory
-		if err := os.MkdirAll(targetDir, 0755); err != nil {
+		if err := os.MkdirAll(fileDir, 0755); err != nil {
 			// ja: ディレクトリ作成エラーの場合、このファイルをスキップして次へ
 			// en: Skip this file if directory creation fails and continue with next
 			continue
@@ -273,7 +323,7 @@ func extractBackupArchive(archivePath string) (int, error) {
 
 		// ja: ファイルパス全体を再検証（MkdirAll後の安全性確認）
 		// en: Re-validate full file path after directory creation for additional safety
-		if err := validatePathNoSymlinks(currentDir, targetPath); err != nil {
+		if err := validatePathNoSymlinks(targetDir, targetPath); err != nil {
 			continue
 		}
 

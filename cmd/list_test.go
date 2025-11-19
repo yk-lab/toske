@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/yk-lab/toske/i18n"
 )
 
 // setupTestConfig creates a temporary config file and sets cfgFile to point to it.
@@ -60,6 +62,7 @@ func captureStdout(t *testing.T, fn func() error) (string, error) {
 }
 
 func TestRunList(t *testing.T) {
+	i18n.SetLanguage("en")
 	tests := []struct {
 		name        string
 		configData  string
@@ -139,6 +142,7 @@ projects:
 }
 
 func TestRunListNoConfig(t *testing.T) {
+	i18n.SetLanguage("en")
 	// Create temporary directory without config file
 	tempDir := t.TempDir()
 	nonExistentPath := filepath.Join(tempDir, "nonexistent.yml")
@@ -158,6 +162,7 @@ func TestRunListNoConfig(t *testing.T) {
 }
 
 func TestRunListWithMinimalProject(t *testing.T) {
+	i18n.SetLanguage("en")
 	// Test with minimal project configuration (no optional fields)
 	configData := `version: 1.0.0
 projects:
@@ -178,6 +183,7 @@ projects:
 
 // TestRunListOutputValidation tests that the output contains expected project information
 func TestRunListOutputValidation(t *testing.T) {
+	i18n.SetLanguage("en")
 	tests := []struct {
 		name           string
 		configData     string
@@ -263,6 +269,7 @@ projects: []
 
 // TestRunListBackupPathsFormat tests that backup paths are displayed as bullet list
 func TestRunListBackupPathsFormat(t *testing.T) {
+	i18n.SetLanguage("en")
 	configData := `version: 1.0.0
 projects:
   - name: test-project

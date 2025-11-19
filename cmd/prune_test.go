@@ -7,10 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/yk-lab/toske/i18n"
 	"gopkg.in/yaml.v3"
 )
 
 func TestRunPrune(t *testing.T) {
+	i18n.SetLanguage("en")
 	tests := []struct {
 		name              string
 		projectName       string
@@ -183,7 +185,8 @@ projects:
 			setupBackups: func(t *testing.T, homeDir string) {
 				createTestBackups(t, homeDir, "test-project", 3)
 			},
-			expectError: false,
+			expectError:  true,
+			errorMessage: "backup_retention",
 			validateResult: func(t *testing.T, homeDir string) {
 				// Verify backups are unchanged (not pruned)
 				backupDir := filepath.Join(homeDir, ".config", "toske", "backups", "test-project")
@@ -336,6 +339,7 @@ projects:
 }
 
 func TestPruneNoBackupDirectory(t *testing.T) {
+	i18n.SetLanguage("en")
 	configData := `version: 1.0.0
 projects:
   - name: test-project
@@ -371,6 +375,7 @@ projects:
 }
 
 func TestPruneNoMetadata(t *testing.T) {
+	i18n.SetLanguage("en")
 	configData := `version: 1.0.0
 projects:
   - name: test-project
@@ -412,6 +417,7 @@ projects:
 }
 
 func TestPruneAlreadyWithinLimit(t *testing.T) {
+	i18n.SetLanguage("en")
 	configData := `version: 1.0.0
 projects:
   - name: test-project
@@ -457,6 +463,7 @@ projects:
 }
 
 func TestDetermineRetention(t *testing.T) {
+	i18n.SetLanguage("en")
 	tests := []struct {
 		name              string
 		project           Project
@@ -538,6 +545,7 @@ func TestDetermineRetention(t *testing.T) {
 }
 
 func TestPrunePreservesNewestBackups(t *testing.T) {
+	i18n.SetLanguage("en")
 	configData := `version: 1.0.0
 projects:
   - name: test-project

@@ -865,12 +865,12 @@ projects:
 func setupTestBackup(t *testing.T, projectName string) func() {
 	t.Helper()
 
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		t.Fatalf("Failed to get home directory: %v", err)
-	}
+	// ja: テスト用の一時ディレクトリを使用
+	// en: Use temporary directory for testing
+	tempHome := t.TempDir()
+	t.Setenv("HOME", tempHome)
 
-	backupDir := filepath.Join(homeDir, ".config", "toske", "backups", projectName)
+	backupDir := filepath.Join(tempHome, ".config", "toske", "backups", projectName)
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
 		t.Fatalf("Failed to create backup directory: %v", err)
 	}

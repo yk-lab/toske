@@ -139,6 +139,15 @@ func runBackup() error {
 		return fmt.Errorf(i18n.T("backup.archiveError"), err)
 	}
 
+	// ja: バックアップされたファイルが0件の場合はエラー
+	// en: Error if no files were backed up
+	if len(backedUpFiles) == 0 {
+		// ja: 空のアーカイブを削除
+		// en: Remove empty archive
+		os.Remove(archivePath)
+		return fmt.Errorf("%s", i18n.T("backup.noFilesBackedUp"))
+	}
+
 	// ja: メタデータファイルを更新
 	// en: Update metadata file
 	fmt.Println(i18n.T("backup.updatingMetadata"))
