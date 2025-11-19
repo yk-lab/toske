@@ -5,8 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 func TestRunDelete(t *testing.T) {
@@ -27,16 +29,18 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_paths:
       - .env
     backup_retention: 3
   - name: other-project
     repo: git@github.com:user/other.git
     branch: main
+    repository_path: /tmp/other-project
 `,
 			userInput:       "y\n",
 			expectError:     false,
-			expectedRemains: []string{"other-project"},
+			expectedRemains: []string{"test-project", "other-project"},
 		},
 		{
 			name:        "successful deletion with yes (full word) confirmation",
@@ -46,13 +50,15 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
   - name: another-project
     repo: git@github.com:user/another.git
     branch: develop
+    repository_path: /tmp/another-project
 `,
 			userInput:       "yes\n",
 			expectError:     false,
-			expectedRemains: []string{"another-project"},
+			expectedRemains: []string{"test-project", "another-project"},
 		},
 		{
 			name:        "cancelled deletion with no",
@@ -62,6 +68,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `,
 			userInput:       "n\n",
 			expectError:     false,
@@ -75,6 +82,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `,
 			userInput:       "\n",
 			expectError:     false,
@@ -88,6 +96,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `,
 			userInput:    "",
 			expectError:  true,
@@ -109,10 +118,11 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `,
 			userInput:       "y\n",
 			expectError:     false,
-			expectedRemains: []string{},
+			expectedRemains: []string{"test-project"},
 		},
 	}
 
@@ -120,6 +130,11 @@ projects:
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup config
 			defer setupTestConfig(t, tt.configData)()
+
+			// Setup mock backup for the project
+			if tt.projectName != "" && !strings.Contains(tt.name, "not found") && !strings.Contains(tt.name, "missing project flag") {
+				defer setupTestBackup(t, tt.projectName)()
+			}
 
 			// Setup stdin mock
 			if tt.userInput != "" {
@@ -281,8 +296,12 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `
 			defer setupTestConfig(t, configData)()
+
+			// Setup mock backup
+			defer setupTestBackup(t, "test-project")()
 
 			// Setup stdin mock
 			tmpfile, err := os.CreateTemp("", "stdin")
@@ -329,19 +348,12 @@ projects:
 				t.Fatalf("Failed to unmarshal config: %v", err)
 			}
 
-			projectExists := false
-			for _, project := range config.Projects {
-				if project.Name == "test-project" {
-					projectExists = true
-					break
-				}
+			// Projects always remain in config (delete only removes repository, not config)
+			if len(config.Projects) != 1 {
+				t.Errorf("Expected 1 project in config, got %d", len(config.Projects))
 			}
-
-			if tt.shouldDelete && projectExists {
-				t.Errorf("Expected project to be deleted, but it still exists")
-			}
-			if !tt.shouldDelete && !projectExists {
-				t.Errorf("Expected project to remain, but it was deleted")
+			if len(config.Projects) > 0 && config.Projects[0].Name != "test-project" {
+				t.Errorf("Expected 'test-project' in config, got '%s'", config.Projects[0].Name)
 			}
 		})
 	}
@@ -354,9 +366,11 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `
 
 	defer setupTestConfig(t, configData)()
+	defer setupTestBackup(t, "test-project")()
 
 	// Setup stdin to confirm deletion
 	tmpfile, err := os.CreateTemp("", "stdin")
@@ -402,8 +416,11 @@ projects:
 		t.Fatalf("Failed to unmarshal config: %v", err)
 	}
 
-	if len(config.Projects) != 0 {
-		t.Errorf("Expected project to be deleted despite whitespace in flag, but found %d projects", len(config.Projects))
+	if len(config.Projects) != 1 {
+		t.Errorf("Expected project to remain in config after deletion, but found %d projects", len(config.Projects))
+	}
+	if config.Projects[0].Name != "test-project" {
+		t.Errorf("Expected 'test-project' to remain in config, got '%s'", config.Projects[0].Name)
 	}
 }
 
@@ -414,6 +431,7 @@ projects:
   - name: project-one
     repo: git@github.com:user/one.git
     branch: main
+    repository_path: /tmp/project-one
     backup_paths:
       - .env
       - db.sqlite3
@@ -421,12 +439,14 @@ projects:
   - name: project-two
     repo: git@github.com:user/two.git
     branch: develop
+    repository_path: /tmp/project-two
     backup_paths:
       - config/
     backup_retention: 5
 `
 
 	defer setupTestConfig(t, configData)()
+	defer setupTestBackup(t, "project-one")()
 
 	// Setup stdin to confirm deletion
 	tmpfile, err := os.CreateTemp("", "stdin")
@@ -496,14 +516,20 @@ projects:
 		t.Fatalf("Failed to unmarshal config: %v", err)
 	}
 
-	// Verify project-two still has its backup paths and retention
-	if len(config.Projects) != 1 {
-		t.Fatalf("Expected 1 project, got %d", len(config.Projects))
+	// Verify both projects remain in config (delete only removes repository, not config)
+	if len(config.Projects) != 2 {
+		t.Fatalf("Expected 2 projects in config, got %d", len(config.Projects))
 	}
 
-	project := config.Projects[0]
+	// Verify project-one is still in config
+	if config.Projects[0].Name != "project-one" {
+		t.Errorf("Expected project-one at position 0, got %s", config.Projects[0].Name)
+	}
+
+	// Verify project-two still has its backup paths and retention
+	project := config.Projects[1]
 	if project.Name != "project-two" {
-		t.Errorf("Expected project-two, got %s", project.Name)
+		t.Errorf("Expected project-two at position 1, got %s", project.Name)
 	}
 	if len(project.BackupPaths) != 1 {
 		t.Errorf("Expected 1 backup path, got %d - YAML field names may be corrupted", len(project.BackupPaths))
@@ -520,12 +546,15 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
   - name: other-project
     repo: git@github.com:user/other.git
     branch: main
+    repository_path: /tmp/other-project
 `
 
 	defer setupTestConfig(t, configData)()
+	defer setupTestBackup(t, "test-project")()
 
 	// Set flags - no stdin setup needed because --force skips prompt
 	originalProjectName := deleteProjectName
@@ -555,11 +584,16 @@ projects:
 		t.Fatalf("Failed to unmarshal config: %v", err)
 	}
 
-	if len(config.Projects) != 1 {
-		t.Errorf("Expected 1 remaining project, got %d", len(config.Projects))
+	if len(config.Projects) != 2 {
+		t.Errorf("Expected 2 projects to remain in config, got %d", len(config.Projects))
 	}
-	if len(config.Projects) > 0 && config.Projects[0].Name != "other-project" {
-		t.Errorf("Expected 'other-project' to remain, got '%s'", config.Projects[0].Name)
+	if len(config.Projects) >= 2 {
+		if config.Projects[0].Name != "test-project" {
+			t.Errorf("Expected 'test-project' at position 0, got '%s'", config.Projects[0].Name)
+		}
+		if config.Projects[1].Name != "other-project" {
+			t.Errorf("Expected 'other-project' at position 1, got '%s'", config.Projects[1].Name)
+		}
 	}
 }
 
@@ -622,40 +656,46 @@ func TestFindProjectIndex(t *testing.T) {
 // TestConfirmDeletion tests the confirmDeletion function
 func TestConfirmDeletion(t *testing.T) {
 	tests := []struct {
-		name     string
-		force    bool
-		input    string
-		expected bool
+		name       string
+		repoExists bool
+		force      bool
+		input      string
+		expected   bool
 	}{
 		{
-			name:     "force flag true",
-			force:    true,
-			input:    "", // no input needed
-			expected: true,
+			name:       "force flag true",
+			repoExists: true,
+			force:      true,
+			input:      "", // no input needed
+			expected:   true,
 		},
 		{
-			name:     "confirm with y",
-			force:    false,
-			input:    "y\n",
-			expected: true,
+			name:       "confirm with y",
+			repoExists: true,
+			force:      false,
+			input:      "y\n",
+			expected:   true,
 		},
 		{
-			name:     "confirm with yes",
-			force:    false,
-			input:    "yes\n",
-			expected: true,
+			name:       "confirm with yes",
+			repoExists: false,
+			force:      false,
+			input:      "yes\n",
+			expected:   true,
 		},
 		{
-			name:     "cancel with n",
-			force:    false,
-			input:    "n\n",
-			expected: false,
+			name:       "cancel with n",
+			repoExists: true,
+			force:      false,
+			input:      "n\n",
+			expected:   false,
 		},
 		{
-			name:     "cancel with empty",
-			force:    false,
-			input:    "\n",
-			expected: false,
+			name:       "cancel with empty",
+			repoExists: false,
+			force:      false,
+			input:      "\n",
+			expected:   false,
 		},
 	}
 
@@ -685,7 +725,15 @@ func TestConfirmDeletion(t *testing.T) {
 				}()
 			}
 
-			result, err := confirmDeletion("test-project", tt.force)
+			// Create a test project
+			project := Project{
+				Name:           "test-project",
+				Repo:           "git@github.com:user/test.git",
+				Branch:         "main",
+				RepositoryPath: "/tmp/test-project",
+			}
+
+			result, err := confirmDeletion(project, tt.repoExists, tt.force)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
@@ -738,18 +786,23 @@ projects:
   - name: first-project
     repo: git@github.com:user/first.git
     branch: main
+    repository_path: /tmp/first-project
   - name: second-project
     repo: git@github.com:user/second.git
     branch: main
+    repository_path: /tmp/second-project
   - name: third-project
     repo: git@github.com:user/third.git
     branch: main
+    repository_path: /tmp/third-project
   - name: fourth-project
     repo: git@github.com:user/fourth.git
     branch: main
+    repository_path: /tmp/fourth-project
 `
 
 	defer setupTestConfig(t, configData)()
+	defer setupTestBackup(t, "second-project")()
 
 	// Setup stdin to confirm deletion
 	tmpfile, err := os.CreateTemp("", "stdin")
@@ -795,7 +848,8 @@ projects:
 		t.Fatalf("Failed to unmarshal config: %v", err)
 	}
 
-	expectedProjects := []string{"first-project", "third-project", "fourth-project"}
+	// All projects should remain in config (delete only removes repository, not config)
+	expectedProjects := []string{"first-project", "second-project", "third-project", "fourth-project"}
 	if len(config.Projects) != len(expectedProjects) {
 		t.Fatalf("Expected %d projects, got %d", len(expectedProjects), len(config.Projects))
 	}
@@ -804,5 +858,65 @@ projects:
 		if config.Projects[i].Name != expected {
 			t.Errorf("Expected project '%s' at position %d, got '%s'", expected, i, config.Projects[i].Name)
 		}
+	}
+}
+
+// setupTestBackup creates a mock backup directory and metadata file for testing
+func setupTestBackup(t *testing.T, projectName string) func() {
+	t.Helper()
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatalf("Failed to get home directory: %v", err)
+	}
+
+	backupDir := filepath.Join(homeDir, ".config", "toske", "backups", projectName)
+	if err := os.MkdirAll(backupDir, 0755); err != nil {
+		t.Fatalf("Failed to create backup directory: %v", err)
+	}
+
+	// Create a mock backup metadata file
+	metadata := BackupMetadata{
+		Project: projectName,
+		Backups: []BackupRecord{
+			{
+				Filename:  "backup-" + projectName + "-20240101-120000.tar.gz",
+				Timestamp: time.Now(),
+				Files:     []string{".env", "config.yml"},
+			},
+		},
+	}
+
+	metadataPath := filepath.Join(backupDir, "backups.yaml")
+	data, err := yaml.Marshal(&metadata)
+	if err != nil {
+		t.Fatalf("Failed to marshal metadata: %v", err)
+	}
+
+	if err := os.WriteFile(metadataPath, data, 0644); err != nil {
+		t.Fatalf("Failed to write metadata file: %v", err)
+	}
+
+	return func() {
+		os.RemoveAll(backupDir)
+	}
+}
+
+// setupRepositoryDir creates a test repository directory
+func setupRepositoryDir(t *testing.T, repoPath string) func() {
+	t.Helper()
+
+	if err := os.MkdirAll(repoPath, 0755); err != nil {
+		t.Fatalf("Failed to create repository directory: %v", err)
+	}
+
+	// Create a dummy file to make it non-empty
+	dummyFile := filepath.Join(repoPath, "README.md")
+	if err := os.WriteFile(dummyFile, []byte("test repo"), 0644); err != nil {
+		t.Fatalf("Failed to create dummy file: %v", err)
+	}
+
+	return func() {
+		os.RemoveAll(repoPath)
 	}
 }

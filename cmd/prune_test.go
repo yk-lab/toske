@@ -34,6 +34,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_paths:
       - .env
 `,
@@ -61,6 +62,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_paths:
       - .env
     backup_retention: 3
@@ -88,9 +90,11 @@ projects:
   - name: project-one
     repo: git@github.com:user/one.git
     branch: main
+    repository_path: /tmp/project-one
   - name: project-two
     repo: git@github.com:user/two.git
     branch: main
+    repository_path: /tmp/project-two
 `,
 			setupBackups: func(t *testing.T, homeDir string) {
 				createTestBackups(t, homeDir, "project-one", 4)
@@ -123,6 +127,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `,
 			setupBackups: func(t *testing.T, homeDir string) {},
 			expectError:  true,
@@ -139,6 +144,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `,
 			setupBackups: func(t *testing.T, homeDir string) {},
 			expectError:  true,
@@ -155,6 +161,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `,
 			setupBackups: func(t *testing.T, homeDir string) {},
 			expectError:  true,
@@ -171,6 +178,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `,
 			setupBackups: func(t *testing.T, homeDir string) {
 				createTestBackups(t, homeDir, "test-project", 3)
@@ -196,6 +204,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_retention: 2
 `,
 			setupBackups: func(t *testing.T, homeDir string) {
@@ -222,9 +231,11 @@ projects:
   - name: project-with-backups
     repo: git@github.com:user/one.git
     branch: main
+    repository_path: /tmp/project-with-backups
   - name: project-no-backups
     repo: git@github.com:user/two.git
     branch: main
+    repository_path: /tmp/project-no-backups
 `,
 			setupBackups: func(t *testing.T, homeDir string) {
 				// Only create backups for one project
@@ -244,9 +255,11 @@ projects:
   - name: project-needs-prune
     repo: git@github.com:user/one.git
     branch: main
+    repository_path: /tmp/project-needs-prune
   - name: project-within-limit
     repo: git@github.com:user/two.git
     branch: main
+    repository_path: /tmp/project-within-limit
 `,
 			setupBackups: func(t *testing.T, homeDir string) {
 				createTestBackups(t, homeDir, "project-needs-prune", 8)
@@ -328,6 +341,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_retention: 3
 `
 
@@ -362,6 +376,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_retention: 3
 `
 
@@ -402,6 +417,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_retention: 5
 `
 
@@ -527,6 +543,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `
 
 	defer setupTestConfig(t, configData)()

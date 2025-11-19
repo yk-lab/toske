@@ -30,6 +30,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_paths:
       - .env
       - db.sqlite3
@@ -51,6 +52,7 @@ projects:
   - name: dir-project
     repo: git@github.com:user/dir.git
     branch: main
+    repository_path: /tmp/dir-project
     backup_paths:
       - config/
     backup_retention: 2
@@ -71,6 +73,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_paths:
       - .env
 `,
@@ -86,6 +89,7 @@ projects:
   - name: no-paths-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/no-paths-project
     backup_paths: []
 `,
 			setupFiles:   func(baseDir string) error { return nil },
@@ -188,6 +192,7 @@ projects:
   - name: archive-test
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/archive-test
     backup_paths:
       - .env
       - db.sqlite3
@@ -305,6 +310,7 @@ projects:
   - name: retention-test
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/retention-test
     backup_paths:
       - .env
     backup_retention: 2

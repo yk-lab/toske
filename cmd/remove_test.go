@@ -27,12 +27,14 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_paths:
       - .env
     backup_retention: 3
   - name: other-project
     repo: git@github.com:user/other.git
     branch: main
+    repository_path: /tmp/other-project
 `,
 			userInput:       "y\n",
 			expectError:     false,
@@ -46,9 +48,11 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
   - name: another-project
     repo: git@github.com:user/another.git
     branch: develop
+    repository_path: /tmp/another-project
 `,
 			userInput:       "yes\n",
 			expectError:     false,
@@ -62,6 +66,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `,
 			userInput:       "n\n",
 			expectError:     false,
@@ -75,6 +80,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `,
 			userInput:       "\n",
 			expectError:     false,
@@ -88,6 +94,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `,
 			userInput:    "",
 			expectError:  true,
@@ -109,6 +116,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `,
 			userInput:       "y\n",
 			expectError:     false,
@@ -281,6 +289,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `
 			defer setupTestConfig(t, configData)()
 
@@ -354,6 +363,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
 `
 
 	defer setupTestConfig(t, configData)()
@@ -414,6 +424,7 @@ projects:
   - name: project-one
     repo: git@github.com:user/one.git
     branch: main
+    repository_path: /tmp/project-one
     backup_paths:
       - .env
       - db.sqlite3
@@ -421,6 +432,7 @@ projects:
   - name: project-two
     repo: git@github.com:user/two.git
     branch: develop
+    repository_path: /tmp/project-two
     backup_paths:
       - config/
     backup_retention: 5
@@ -520,9 +532,11 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
   - name: other-project
     repo: git@github.com:user/other.git
     branch: main
+    repository_path: /tmp/other-project
 `
 
 	defer setupTestConfig(t, configData)()
@@ -738,15 +752,19 @@ projects:
   - name: first-project
     repo: git@github.com:user/first.git
     branch: main
+    repository_path: /tmp/first-project
   - name: second-project
     repo: git@github.com:user/second.git
     branch: main
+    repository_path: /tmp/second-project
   - name: third-project
     repo: git@github.com:user/third.git
     branch: main
+    repository_path: /tmp/third-project
   - name: fourth-project
     repo: git@github.com:user/fourth.git
     branch: main
+    repository_path: /tmp/fourth-project
 `
 
 	defer setupTestConfig(t, configData)()

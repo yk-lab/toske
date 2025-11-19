@@ -6,6 +6,7 @@ projects:
   - name: project-a
     repo: git@github.com:user/project-a.git
     branch: main
+    repository_path: /Users/username/projects/project-a
     backup_paths:
       - .env
       - db.sqlite3
@@ -16,6 +17,7 @@ projects:
   - name: project-b
     repo: https://github.com/user/project-b.git
     branch: develop
+    repository_path: /Users/username/projects/project-b
     backup_paths:
       - .env.local
       - data/
@@ -39,7 +41,7 @@ projects:
       "description": "バックアップ対象プロジェクト一覧",
       "items": {
         "type": "object",
-        "required": ["name", "repo", "branch", "backup_paths"],
+        "required": ["name", "repo", "branch", "repository_path", "backup_paths"],
         "properties": {
           "name": {
             "type": "string",
@@ -53,6 +55,10 @@ projects:
           "branch": {
             "type": "string",
             "description": "使用するGitのブランチ名"
+          },
+          "repository_path": {
+            "type": "string",
+            "description": "ローカルリポジトリの絶対パス"
           },
           "backup_paths": {
             "type": "array",

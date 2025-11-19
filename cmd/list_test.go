@@ -72,6 +72,7 @@ projects:
   - name: sample-project
     repo: git@github.com:user/sample-project.git
     branch: main
+    repository_path: /tmp/sample-project
     backup_paths:
       - .env
       - db.sqlite3
@@ -86,12 +87,14 @@ projects:
   - name: project-one
     repo: git@github.com:user/project-one.git
     branch: main
+    repository_path: /tmp/project-one
     backup_paths:
       - .env
     backup_retention: 3
   - name: project-two
     repo: https://github.com/user/project-two.git
     branch: develop
+    repository_path: /tmp/project-two
     backup_paths:
       - .env
       - db/
@@ -161,6 +164,7 @@ projects:
   - name: minimal-project
     repo: git@github.com:user/minimal.git
     branch: main
+    repository_path: /tmp/minimal-project
 `
 
 	defer setupTestConfig(t, configData)()
@@ -186,6 +190,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_paths:
       - .env
       - db.sqlite3
@@ -208,10 +213,12 @@ projects:
   - name: project-alpha
     repo: https://github.com/user/alpha.git
     branch: develop
+    repository_path: /tmp/project-alpha
     backup_retention: 3
   - name: project-beta
     repo: git@github.com:user/beta.git
     branch: main
+    repository_path: /tmp/project-beta
 `,
 			expectedOutput: []string{
 				"project-alpha",
@@ -261,6 +268,7 @@ projects:
   - name: test-project
     repo: git@github.com:user/test.git
     branch: main
+    repository_path: /tmp/test-project
     backup_paths:
       - .env
       - config/database.yml
